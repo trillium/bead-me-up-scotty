@@ -98,7 +98,7 @@ export function MobileBoard({
               onDoneWindowChange(e.target.value === "" ? null : Number(e.target.value))
             }
             title="Show only beads closed within this window"
-            className="h-9 cursor-pointer rounded-[7px] border border-border bg-[var(--surface-2)] px-[9px] text-[12px] text-[var(--text-2)] outline-none"
+            className="h-11 cursor-pointer rounded-[7px] border border-border bg-[var(--surface-2)] px-[9px] text-[12px] text-[var(--text-2)] outline-none"
           >
             <option value="">All time</option>
             <option value="7">Last 7 days</option>
@@ -162,6 +162,14 @@ function MobileBeadRow({
   return (
     <article
       onClick={() => openDetail(bead.id)}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openDetail(bead.id);
+        }
+      }}
+      tabIndex={0}
       style={{ boxShadow: "var(--shadow)" }}
       className="flex cursor-pointer flex-col gap-[9px] rounded-[11px] border border-border bg-[var(--surface)] p-[12px_13px]"
     >
