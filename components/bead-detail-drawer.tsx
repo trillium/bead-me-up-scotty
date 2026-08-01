@@ -12,6 +12,7 @@ import { CopyableId } from "@/components/copyable-id";
 import { useApp } from "@/components/app-context";
 import { useImageDrop } from "@/hooks/use-image-drop";
 import { useResizableWidth } from "@/hooks/use-resizable-width";
+import { useIsTouchDevice } from "@/hooks/use-is-touch-device";
 import { DescriptionContent } from "@/components/description-content";
 import { MarkdownToolbar, applyTransform } from "@/components/markdown-toolbar";
 import { bold, italic, link } from "@/lib/markdown-edit";
@@ -154,6 +155,7 @@ function DrawerBody({
   const [addingGate, setAddingGate] = React.useState(false);
   const [gateReason, setGateReason] = React.useState("");
   const gateBead = isHumanGate(bead);
+  const isTouch = useIsTouchDevice();
 
   // Closing is the only moment a reason can be recorded — bd offers no way to
   // attach one afterwards — so picking "Closed" opens a skippable composer
@@ -701,7 +703,7 @@ function DrawerBody({
               (addingGate ? (
                 <div className="flex items-center gap-[7px] rounded-[9px] border border-border bg-[var(--surface)] p-[9px_11px]">
                   <input
-                    autoFocus
+                    autoFocus={!isTouch}
                     value={gateReason}
                     onChange={(e) => setGateReason(e.target.value)}
                     onKeyDown={(e) => {
