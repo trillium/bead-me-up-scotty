@@ -229,6 +229,7 @@ export function AppShell({ projectId }: { projectId: string }) {
             kind={data?.meta?.kind}
             projectId={projectId}
             live={live}
+            className="w-[280px]"
           />
         </SheetContent>
       </Sheet>
