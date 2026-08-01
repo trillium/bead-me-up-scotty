@@ -8,6 +8,8 @@ import { useLastView } from "@/hooks/use-last-view";
 import { useTheme } from "@/components/theme-provider";
 import { makeIndex } from "@/lib/beads-view";
 import { AppProvider } from "@/components/app-context";
+import { Icon } from "@/components/icons";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Sidebar } from "@/components/sidebar";
 import { Board } from "@/components/board/board";
 import { ListView } from "@/components/list-view";
@@ -33,6 +35,10 @@ export function AppShell({ projectId }: { projectId: string }) {
   const [openStack, setOpenStack] = React.useState<string[]>([]);
   const openId = openStack.length ? openStack[openStack.length - 1] : null;
   const [palette, setPalette] = React.useState(false);
+  // The 228px persistent rail is hidden below md (bead beadui-mobile) — on a
+  // phone it would eat well over half the viewport, so nav moves into this
+  // slide-in sheet instead.
+  const [mobileNav, setMobileNav] = React.useState(false);
   const [create, setCreate] = React.useState<{
     open: boolean;
     parent: string;
@@ -150,8 +156,22 @@ export function AppShell({ projectId }: { projectId: string }) {
           kind={data?.meta?.kind}
           projectId={projectId}
           live={live}
+          className="hidden md:flex"
         />
         <main className="relative flex min-w-0 flex-1 flex-col">
+          <div
+            className="flex flex-shrink-0 items-center gap-[6px] border-b border-border bg-[var(--surface)] px-[10px] py-[8px] md:hidden"
+            style={{ paddingTop: "max(8px, env(safe-area-inset-top))" }}
+          >
+            <button
+              onClick={() => setMobileNav(true)}
+              aria-label="Open menu"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+            >
+              <Icon name="list" size={19} />
+            </button>
+            <span className="text-[13px] font-[650] tracking-[-.01em]">Bead Me Up Scotty</span>
+          </div>
           {errorMessage && view !== "settings" ? (
             <div className="flex flex-1 items-center justify-center p-8">
               <div className="max-w-md rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-center">
@@ -189,6 +209,25 @@ export function AppShell({ projectId }: { projectId: string }) {
           />
         </main>
       </div>
+
+      <Sheet open={mobileNav} onOpenChange={setMobileNav}>
+        <SheetContent
+          side="left"
+          showCloseButton={false}
+          className="w-auto max-w-[85vw] border-none bg-transparent p-0 shadow-lg"
+        >
+          <Sidebar
+            view={view}
+            onView={(v) => {
+              setView(v);
+              setMobileNav(false);
+            }}
+            kind={data?.meta?.kind}
+            projectId={projectId}
+            live={live}
+          />
+        </SheetContent>
+      </Sheet>
 
       <CreateBeadModal
         open={create.open}

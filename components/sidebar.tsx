@@ -54,12 +54,16 @@ export function Sidebar({
   kind,
   projectId,
   live,
+  className,
 }: {
   view: View;
   onView: (v: View) => void;
   kind?: "bd" | "demo";
   projectId: string;
   live?: boolean;
+  /** Lets callers control visibility per breakpoint (persistent desktop rail
+   * vs. always-visible copy inside the mobile nav sheet, bead beadui-mobile). */
+  className?: string;
 }) {
   const { mode, toggle } = useTheme();
   const { meta, beads, index } = useApp();
@@ -71,7 +75,12 @@ export function Sidebar({
   const game = useGamification(projectId, !!meta?.gamification);
 
   return (
-    <aside className="flex w-[228px] flex-shrink-0 flex-col border-r border-border bg-[var(--surface)] p-[18px_14px]">
+    <aside
+      className={cn(
+        "flex w-[228px] flex-shrink-0 flex-col border-r border-border bg-[var(--surface)] p-[18px_14px]",
+        className,
+      )}
+    >
       <div className="flex items-center gap-[10px] px-2 pb-[18px] pt-1">
         <div
           className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[9px] text-white"

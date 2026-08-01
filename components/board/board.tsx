@@ -19,6 +19,7 @@ import { FilterBar } from "@/components/filter-bar";
 import { matchesFilters, emptyFilters, labelOptionsFrom, type Filters } from "@/lib/filters";
 import { BOARD_COLUMNS as COLUMNS, sortByOrder as sortCards } from "@/lib/board-columns";
 import { Column } from "./column";
+import { MobileBoard } from "./mobile-board";
 import type { Bead } from "@/lib/schema";
 
 export function Board() {
@@ -124,7 +125,7 @@ export function Board() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex flex-shrink-0 items-center gap-3 border-b border-border bg-[var(--surface)] p-[14px_22px]">
+      <header className="flex flex-shrink-0 flex-wrap items-center gap-3 border-b border-border bg-[var(--surface)] p-[14px_22px]">
         <div className="mr-1 flex flex-col gap-px">
           <h1 className="m-0 text-base font-[650] tracking-[-.01em]">Board</h1>
           <span className="text-[11.5px] text-[var(--text-3)]">
@@ -150,40 +151,55 @@ export function Board() {
         </button>
       </header>
 
-      <div className="bd-scroll min-h-0 flex-1 overflow-x-auto overflow-y-hidden p-[18px_22px]">
+      <div className="bd-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-[18px_22px] md:overflow-x-auto md:overflow-y-hidden">
         {loading && beads.length === 0 ? (
           <div className="text-[13px] text-[var(--text-3)]">Loading beads…</div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={onDragEnd}>
-            <div className="flex h-full min-h-0 gap-4">
-              {shownColumns.map(({ col, cards }) => (
-                <Column
-                  key={col.id}
-                  col={col}
-                  cards={cards}
-                  childCounts={childCounts}
-                  control={
-                    col.id === "done" ? (
-                      <select
-                        value={doneWindow ?? ""}
-                        onChange={(e) =>
-                          setDoneWindow(e.target.value === "" ? null : Number(e.target.value))
-                        }
-                        title="Show only beads closed within this window"
-                        className="cursor-pointer rounded-[7px] border border-border bg-[var(--surface-2)] px-[7px] py-[3px] text-[11px] text-[var(--text-2)] outline-none"
-                      >
-                        <option value="">All time</option>
-                        <option value="7">Last 7 days</option>
-                        <option value="28">Last 4 weeks</option>
-                        <option value="90">Last 3 months</option>
-                        <option value="365">Last 12 months</option>
-                      </select>
-                    ) : undefined
-                  }
-                />
-              ))}
+          <>
+            {/* Mobile: single-column filterable list, no side-by-side columns —
+                the 5-column board forces horizontal scroll in portrait, which
+                is the anti-pattern this view exists to avoid (bead beadui-mobile). */}
+            <div className="h-full min-h-0 md:hidden">
+              <MobileBoard
+                columns={shownColumns}
+                childCounts={childCounts}
+                doneWindow={doneWindow}
+                onDoneWindowChange={setDoneWindow}
+                onSetStatus={(id, status) => setStatus.mutate({ id, status })}
+              />
             </div>
-          </DndContext>
+
+            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={onDragEnd}>
+              <div className="hidden h-full min-h-0 gap-4 md:flex">
+                {shownColumns.map(({ col, cards }) => (
+                  <Column
+                    key={col.id}
+                    col={col}
+                    cards={cards}
+                    childCounts={childCounts}
+                    control={
+                      col.id === "done" ? (
+                        <select
+                          value={doneWindow ?? ""}
+                          onChange={(e) =>
+                            setDoneWindow(e.target.value === "" ? null : Number(e.target.value))
+                          }
+                          title="Show only beads closed within this window"
+                          className="cursor-pointer rounded-[7px] border border-border bg-[var(--surface-2)] px-[7px] py-[3px] text-[11px] text-[var(--text-2)] outline-none"
+                        >
+                          <option value="">All time</option>
+                          <option value="7">Last 7 days</option>
+                          <option value="28">Last 4 weeks</option>
+                          <option value="90">Last 3 months</option>
+                          <option value="365">Last 12 months</option>
+                        </select>
+                      ) : undefined
+                    }
+                  />
+                ))}
+              </div>
+            </DndContext>
+          </>
         )}
       </div>
     </div>

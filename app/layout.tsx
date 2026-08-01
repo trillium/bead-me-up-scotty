@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -10,6 +10,15 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   title: APP_TITLE,
   description: "A local web UI for the beads (bd) issue tracker",
+};
+
+// viewport-fit=cover lets content extend under the iPhone notch/Dynamic
+// Island so env(safe-area-inset-*) has something to compute against — without
+// it, safe-area padding on bottom sheets silently no-ops (gold-mobile-ui-research §7).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
