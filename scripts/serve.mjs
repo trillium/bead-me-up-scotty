@@ -5,16 +5,50 @@
  * what makes the one-click "Update now" button able to bring the server back on
  * the new build. Sets BMUS_SUPERVISED=1 so the app knows auto-restart is possible.
  *
+ * Also loads scripts/federation.env for durable defaults (BD_BIN, BEADS_DIR,
+ * BD_JSON_ENVELOPE, HOST) so this stays the one launch path that survives a
+ * restart/crash/self-update without anyone retyping env vars by hand.
+ *
  *   npm run build && npm run serve
  *
  * Zero deps — Node stdlib only.
  */
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const RESTART_CODE = 75;
 const require = createRequire(import.meta.url);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load committed federation defaults (BD_BIN, BEADS_DIR, BD_JSON_ENVELOPE,
+// HOST — see scripts/federation.env) so a crash, restart, or self-update
+// relaunch can never silently fall back to a broken `bd` on PATH. Only fills
+// vars that aren't already set in the environment — a real export always wins.
+function loadFederationEnv() {
+  let text;
+  try {
+    text = fs.readFileSync(path.join(__dirname, "federation.env"), "utf8");
+  } catch {
+    return;
+  }
+  for (const line of text.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const value = trimmed
+      .slice(eq + 1)
+      .trim()
+      .replace(/\$HOME\b/g, os.homedir());
+    if (process.env[key] === undefined) process.env[key] = value;
+  }
+}
+loadFederationEnv();
 
 function nextBin() {
   // Resolve the next CLI from the local install. Under non-standard layouts

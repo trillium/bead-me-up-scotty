@@ -99,6 +99,19 @@ npm run dev            # http://localhost:3000
 - **With real data:** run from (or point Settings at) a directory containing a
   `.beads` repo, with `bd` on your `PATH`. Override the repo with
   `BEADS_REPO=/path/to/project` and the binary with `BD_BIN=/path/to/bd`.
+- **Durable production launch:** `npm run build && npm run serve` runs the
+  supervised launcher ([`scripts/serve.mjs`](scripts/serve.mjs)), which also
+  restarts the server when the in-app "Update now" button requests it. It
+  auto-loads [`scripts/federation.env`](scripts/federation.env), a committed
+  defaults file setting `BD_BIN`, `BEADS_DIR`, `BD_JSON_ENVELOPE=1`, and
+  `HOST=0.0.0.0` — so a crash, restart, or self-update relaunch can never
+  silently lose these and fall back to a broken `bd`. This matters because on
+  some machines `bd` on `PATH` is a *federation wrapper* that routes between
+  multiple issue stores: run with no store context, it just prints a
+  store-selection menu and does nothing — `BD_BIN` must point at the real,
+  single-store `beads` binary instead. Any of these already set in your shell
+  environment overrides the file, so other machines/users aren't stuck with
+  the committed defaults.
 - **Demo mode:** if `bd` isn't installed (or you set `BEADS_DEMO=1`), the app runs
   against an in-memory dataset seeded from the design export — so you can explore
   every feature without beads. The sidebar shows which mode is active.
