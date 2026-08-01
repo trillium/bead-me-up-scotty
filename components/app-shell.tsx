@@ -8,7 +8,9 @@ import { useLastView } from "@/hooks/use-last-view";
 import { useTheme } from "@/components/theme-provider";
 import { makeIndex } from "@/lib/beads-view";
 import { AppProvider } from "@/components/app-context";
+import { emptyFilters, type Filters } from "@/lib/filters";
 import { Icon } from "@/components/icons";
+import { CommandBar } from "@/components/command-bar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Sidebar } from "@/components/sidebar";
 import { Board } from "@/components/board/board";
@@ -29,6 +31,9 @@ import { NotificationWatcher } from "@/components/notification-watcher";
 export function AppShell({ projectId }: { projectId: string }) {
   const [view, setView] = useLastView(projectId);
   const { toggle: toggleTheme } = useTheme();
+  // Shared across Board/List (and the command bar) so one filter facet applies
+  // everywhere instead of each view owning its own copy (beadui-voicebar).
+  const [filters, setFilters] = React.useState<Filters>(emptyFilters);
   // Drawer navigation TRAIL, not a single id: clicking a subtask from its
   // parent used to replace the drawer outright, leaving no way back (GH #15).
   // The visible bead is the last entry.
@@ -147,6 +152,10 @@ export function AppShell({ projectId }: { projectId: string }) {
         pushDetail,
         openCreate,
         openEpic,
+        filters,
+        setFilters,
+        view,
+        setView,
       }}
     >
       <div className="flex h-full overflow-hidden bg-background text-foreground text-sm">
@@ -158,7 +167,10 @@ export function AppShell({ projectId }: { projectId: string }) {
           live={live}
           className="hidden md:flex"
         />
-        <main className="relative flex min-w-0 flex-1 flex-col">
+        <main
+          className="relative flex min-w-0 flex-1 flex-col"
+          style={{ paddingBottom: "calc(56px + env(safe-area-inset-bottom))" }}
+        >
           <div
             className="flex flex-shrink-0 items-center gap-[6px] border-b border-border bg-[var(--surface)] px-[10px] py-[8px] md:hidden"
             style={{ paddingTop: "max(8px, env(safe-area-inset-top))" }}
@@ -238,6 +250,7 @@ export function AppShell({ projectId }: { projectId: string }) {
 
       <CommandPalette open={palette} onOpenChange={setPalette} onView={setView} />
       <NotificationWatcher projectId={projectId} />
+      <CommandBar />
     </AppProvider>
   );
 }

@@ -16,20 +16,20 @@ import { useOrder, useSetOrder } from "@/hooks/use-order";
 import { useBoardPrefs } from "@/hooks/use-board-prefs";
 import { isBlocked, childrenCountMap } from "@/lib/beads-view";
 import { FilterBar } from "@/components/filter-bar";
-import { matchesFilters, emptyFilters, labelOptionsFrom, type Filters } from "@/lib/filters";
+import { matchesFilters, labelOptionsFrom } from "@/lib/filters";
+import type { Bead } from "@/lib/schema";
 import { BOARD_COLUMNS as COLUMNS, sortByOrder as sortCards } from "@/lib/board-columns";
 import { Column } from "./column";
 import { MobileBoard } from "./mobile-board";
-import type { Bead } from "@/lib/schema";
 
 export function Board() {
-  const { beads, index, humanAllowlist, openCreate, loading, projectId } = useApp();
+  const { beads, index, humanAllowlist, openCreate, loading, projectId, filters, setFilters } =
+    useApp();
   const setStatus = useSetStatus();
   const { data: orderData } = useOrder(projectId);
   const setOrder = useSetOrder(projectId);
   const { prefs: boardPrefs } = useBoardPrefs();
   const orders = React.useMemo(() => orderData?.orders ?? {}, [orderData]);
-  const [filters, setFilters] = React.useState<Filters>(emptyFilters);
   const [showArchived, setShowArchived] = React.useState(false);
   // Derived from ALL beads (not the filtered set) so selecting one label
   // doesn't make the remaining options vanish from the dropdown.
