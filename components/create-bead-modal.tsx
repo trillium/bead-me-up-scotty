@@ -13,6 +13,7 @@ import { useApp } from "@/components/app-context";
 import { useCreateBead, beadsKey } from "@/hooks/use-beads";
 import { useImageDrop } from "@/hooks/use-image-drop";
 import { useResizableWidth } from "@/hooks/use-resizable-width";
+import { useIsTouchDevice } from "@/hooks/use-is-touch-device";
 import { DescriptionContent, hasImageRef } from "@/components/description-content";
 import { api } from "@/lib/api-client";
 import { typeLabel } from "@/lib/beads-view";
@@ -89,6 +90,7 @@ function CreateForm({
   const { beads, meta, projectId } = useApp();
   const create = useCreateBead();
   const qc = useQueryClient();
+  const isTouch = useIsTouchDevice();
   const actor = meta?.humanActor ?? "you";
   const isDemo = meta?.kind === "demo";
 
@@ -269,7 +271,7 @@ function CreateForm({
         <label className="flex flex-col gap-[6px]">
           <span className={labelClass}>Title</span>
           <textarea
-            autoFocus
+            autoFocus={!isTouch}
             ref={autosize}
             rows={1}
             className={`${inputClass} h-auto min-h-[38px] resize-none overflow-hidden py-[9px] leading-[1.4]`}

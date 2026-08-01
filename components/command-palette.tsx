@@ -9,6 +9,7 @@ import { Icon } from "@/components/icons";
 import { useApp, type View } from "@/components/app-context";
 import { useProjects } from "@/hooks/use-projects";
 import { useSetStatus, useUpdateBead } from "@/hooks/use-beads";
+import { useIsTouchDevice } from "@/hooks/use-is-touch-device";
 import { BEAD_STATUSES, type Bead } from "@/lib/schema";
 import { statusLabel, catColor, typeLabel } from "@/lib/beads-view";
 
@@ -75,6 +76,7 @@ function PaletteBody({ onView, close }: { onView: (v: View) => void; close: () =
   const update = useUpdateBead();
   const { data: projectsData } = useProjects();
   const projects = projectsData?.projects ?? [];
+  const isTouch = useIsTouchDevice();
 
   const [page, setPage] = React.useState<Page>("root");
   const [search, setSearch] = React.useState("");
@@ -125,7 +127,7 @@ function PaletteBody({ onView, close }: { onView: (v: View) => void; close: () =
           <Icon name="search" size={16} className="ml-1 text-[var(--text-3)]" />
         )}
         <Command.Input
-          autoFocus
+          autoFocus={!isTouch}
           value={search}
           onValueChange={setSearch}
           placeholder={
