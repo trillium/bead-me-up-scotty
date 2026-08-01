@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useBeads } from "@/hooks/use-beads";
 import { useBeadsStream } from "@/hooks/use-beads-stream";
 import { useLastView } from "@/hooks/use-last-view";
+import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useTheme } from "@/components/theme-provider";
 import { makeIndex } from "@/lib/beads-view";
 import { AppProvider } from "@/components/app-context";
@@ -28,6 +29,7 @@ import { NotificationWatcher } from "@/components/notification-watcher";
 
 export function AppShell({ projectId }: { projectId: string }) {
   const [view, setView] = useLastView(projectId);
+  const [sidebarCollapsed, setSidebarCollapsed] = useSidebarCollapsed();
   const { toggle: toggleTheme } = useTheme();
   // Drawer navigation TRAIL, not a single id: clicking a subtask from its
   // parent used to replace the drawer outright, leaving no way back (GH #15).
@@ -157,6 +159,8 @@ export function AppShell({ projectId }: { projectId: string }) {
           projectId={projectId}
           live={live}
           className="hidden md:flex"
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
         <main className="relative flex min-w-0 flex-1 flex-col">
           <div
