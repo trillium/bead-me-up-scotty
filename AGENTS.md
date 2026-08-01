@@ -4,6 +4,9 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+`next lint` does not exist in this Next.js version — run `npm run lint`
+(a thin wrapper around `eslint` directly) instead.
+
 <!-- This section is project-owned and deliberately sits OUTSIDE the generated
      Beads blocks below, which `bd setup` may rewrite. If a generated block ever
      contradicts this section, THIS SECTION WINS. -->

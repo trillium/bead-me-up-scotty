@@ -115,6 +115,13 @@ npm run dev            # http://localhost:3000
 - **Demo mode:** if `bd` isn't installed (or you set `BEADS_DEMO=1`), the app runs
   against an in-memory dataset seeded from the design export — so you can explore
   every feature without beads. The sidebar shows which mode is active.
+- **Installing as a PWA:** the app ships a manifest, icons, and a service worker,
+  but installability also requires HTTPS (or `localhost`) — browsers won't offer
+  the install prompt over a plain-HTTP Tailscale address like `http://100.x.y.z`
+  or `http://machine.tailnet.ts.net` even though the manifest/service worker are
+  present. Serve over HTTPS instead: run `tailscale cert
+  <your-machine>.<tailnet>.ts.net` and point `npm run serve` at that certificate,
+  or use Tailscale Serve/Funnel in front of it.
 
 Set the human actor / allowlist, repo path, and theme in **Settings** (stored
 under your OS config dir, not in beads).
