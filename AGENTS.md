@@ -47,6 +47,17 @@ bd export --all -o ~/bd-backups/<project>-$(date +%F).jsonl
 
 Git commits still work normally — this section is only about bead/Dolt data.
 
+# Durable production launch: `npm run serve`
+
+`npm run serve` (`scripts/serve.mjs`) is the one launch path that survives a
+restart, crash recovery, or the app's self-update relaunch (exit code 75) —
+see the "Durable production launch" bullet in `README.md`. It auto-loads
+`scripts/federation.env`, a committed defaults file for `BD_BIN`, `BEADS_DIR`,
+`BD_JSON_ENVELOPE`, and `HOST=0.0.0.0`, without overriding anything already
+set in the real environment. Do not hand-launch with a bare `npx next start`
+for anything long-lived — it bypasses both this env durability and the
+self-update auto-restart.
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
 ## Beads Issue Tracker
 
@@ -125,3 +136,10 @@ bd prime                # Refresh Beads context
 
 **Architecture in one line:** issues live in a local Dolt DB and **stay there** — this repo runs local-only, with no Dolt remote and no `refs/dolt/data` sync (see "Beads data is local-only" above, which overrides this block); `.beads/issues.jsonl` is a passive local export and is gitignored.
 <!-- END BEADS CODEX SETUP -->
+
+## Maintaining this file
+
+Keep this file for knowledge useful to almost every future agent session in this project.
+Do not repeat what the codebase already shows; point to the authoritative file or command instead.
+Prefer rewriting or pruning existing entries over appending new ones.
+When updating this file, preserve this bar for all agents and keep entries concise.
