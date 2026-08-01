@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { initials, avatarColor, needsHuman, readyHumanGate } from "@/lib/beads-view";
 import { useGamification } from "@/hooks/use-beads";
 // GITHUB_REPO is shared with the build badge (where bug/feature issues are filed).
@@ -55,6 +56,8 @@ export function Sidebar({
   projectId,
   live,
   className,
+  collapsed = false,
+  onToggleCollapsed,
 }: {
   view: View;
   onView: (v: View) => void;
@@ -64,6 +67,10 @@ export function Sidebar({
   /** Lets callers control visibility per breakpoint (persistent desktop rail
    * vs. always-visible copy inside the mobile nav sheet, bead beadui-mobile). */
   className?: string;
+  /** Icon-only rail (bead beadui-sidebar-collapse). Only the persistent desktop
+   * rail supports this — the mobile sheet copy never passes these props. */
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 }) {
   const { mode, toggle } = useTheme();
   const { meta, beads, index } = useApp();
@@ -77,58 +84,92 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex w-[228px] flex-shrink-0 flex-col border-r border-border bg-[var(--surface)] p-[18px_14px]",
+        "flex flex-shrink-0 flex-col overflow-hidden border-r border-border bg-[var(--surface)] transition-[width,padding] duration-200",
+        collapsed ? "w-[60px] p-[18px_8px]" : "w-[228px] p-[18px_14px]",
         className,
       )}
     >
-      <div className="flex items-center gap-[10px] px-2 pb-[18px] pt-1">
+      <div
+        className={cn(
+          "flex items-center gap-[10px] px-2 pb-[18px] pt-1",
+          collapsed && "flex-col gap-2 px-0",
+        )}
+      >
         <div
           className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[9px] text-white"
           style={{ background: "var(--brand)", boxShadow: "0 2px 8px -2px var(--brand)" }}
         >
           <Icon name="logo" size={17} />
         </div>
-        <div className="text-sm font-[650] leading-[1.15] tracking-[-.01em]">
-          Bead Me Up Scotty
-        </div>
+        {!collapsed && (
+          <div className="flex-1 text-sm font-[650] leading-[1.15] tracking-[-.01em]">
+            Bead Me Up Scotty
+          </div>
+        )}
+        {onToggleCollapsed && (
+          <button
+            onClick={onToggleCollapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-[var(--text-3)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+          >
+            <Icon
+              name="chevron"
+              size={13}
+              className={collapsed ? "-rotate-90" : "rotate-90"}
+            />
+          </button>
+        )}
       </div>
 
-      <ProjectSwitcher projectId={projectId} kind={kind} live={live} />
+      {!collapsed && <ProjectSwitcher projectId={projectId} kind={kind} live={live} />}
 
-      <nav className="flex flex-col gap-[2px]">
+      <nav className={cn("flex flex-col gap-[2px]", collapsed && "items-center")}>
         {NAV.filter((n) => n.key !== "achievements" || meta?.gamification).map((n) => {
           const active = view === n.key;
-          return (
+          const button = (
             <button
-              key={n.key}
               onClick={() => onView(n.key)}
+              aria-label={n.label}
               className={cn(
-                "flex w-full items-center gap-[10px] rounded-[9px] px-[10px] py-2 text-left text-[13.5px] transition-colors",
+                "flex items-center gap-[10px] rounded-[9px] text-left text-[13.5px] transition-colors",
+                collapsed ? "h-9 w-9 justify-center" : "w-full px-[10px] py-2",
                 active
                   ? "bg-[var(--brand-weak)] font-semibold text-[var(--brand)]"
                   : "font-medium text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]",
               )}
             >
               <Icon name={n.icon} size={17} className="flex-shrink-0" />
-              <span className="flex-1">{n.label}</span>
-              {n.key === "epics" && epicCount > 0 && (
-                <span className="font-mono text-[11px] text-[var(--text-3)]">{epicCount}</span>
-              )}
-              {n.key === "needsyou" && needsYouCount > 0 && (
-                <span
-                  className="min-w-[18px] rounded-full px-[6px] py-px text-center text-[11px] font-semibold text-white"
-                  style={{ background: "var(--brand)" }}
-                >
-                  {needsYouCount}
-                </span>
+              {!collapsed && (
+                <>
+                  <span className="flex-1">{n.label}</span>
+                  {n.key === "epics" && epicCount > 0 && (
+                    <span className="font-mono text-[11px] text-[var(--text-3)]">{epicCount}</span>
+                  )}
+                  {n.key === "needsyou" && needsYouCount > 0 && (
+                    <span
+                      className="min-w-[18px] rounded-full px-[6px] py-px text-center text-[11px] font-semibold text-white"
+                      style={{ background: "var(--brand)" }}
+                    >
+                      {needsYouCount}
+                    </span>
+                  )}
+                </>
               )}
             </button>
+          );
+          if (!collapsed) return <React.Fragment key={n.key}>{button}</React.Fragment>;
+          return (
+            <Tooltip key={n.key}>
+              <TooltipTrigger render={button} />
+              <TooltipContent side="right">{n.label}</TooltipContent>
+            </Tooltip>
           );
         })}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-[10px]">
-        {meta?.gamification && game.data && (
+      <div className={cn("mt-auto flex flex-col gap-[10px]", collapsed && "items-center")}>
+        {!collapsed && meta?.gamification && game.data && (
           <div className="rounded-[10px] border border-border bg-[var(--surface)] px-[11px] py-[9px]">
             <div className="flex items-center justify-between text-[11.5px]">
               <span className="font-[650]">Level {game.data.you.level}</span>
@@ -151,11 +192,24 @@ export function Sidebar({
           </div>
         )}
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-[10px] rounded-[9px] border border-border bg-[var(--surface)] px-[10px] py-2 text-left text-[12.5px] font-medium text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] focus:outline-none">
-            <Icon name="bug" size={16} className="flex-shrink-0" />
-            <span className="flex-1">Report / request</span>
-            <Icon name="chevron" size={14} className="flex-shrink-0 text-[var(--text-3)]" />
-          </DropdownMenuTrigger>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-[9px] border border-border bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] focus:outline-none" />
+                }
+              >
+                <Icon name="bug" size={16} className="flex-shrink-0" />
+              </TooltipTrigger>
+              <TooltipContent side="right">Report / request</TooltipContent>
+            </Tooltip>
+          ) : (
+            <DropdownMenuTrigger className="flex w-full items-center gap-[10px] rounded-[9px] border border-border bg-[var(--surface)] px-[10px] py-2 text-left text-[12.5px] font-medium text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] focus:outline-none">
+              <Icon name="bug" size={16} className="flex-shrink-0" />
+              <span className="flex-1">Report / request</span>
+              <Icon name="chevron" size={14} className="flex-shrink-0 text-[var(--text-3)]" />
+            </DropdownMenuTrigger>
+          )}
           <DropdownMenuContent className="w-[200px]">
             <DropdownMenuLabel>Open a GitHub issue</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => openIssue("bug")}>
@@ -169,28 +223,55 @@ export function Sidebar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="flex items-center gap-2 px-1">
-          <div
-            className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-            style={{ background: avatarColor(actor) }}
-          >
-            {initials(actor)}
-          </div>
-          <div className="flex-1 leading-[1.15]">
-            <div className="text-[12.5px] font-[550]">{actor}</div>
-            <div className="text-[11px] text-[var(--text-3)]">human actor</div>
-          </div>
-          <button
-            onClick={toggle}
-            title="Toggle theme"
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-border bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
-          >
-            <Icon name={mode === "dark" ? "sun" : "moon"} size={15} />
-          </button>
-        </div>
+        {collapsed ? (
+          <>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <div
+                    className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                    style={{ background: avatarColor(actor) }}
+                  />
+                }
+              >
+                {initials(actor)}
+              </TooltipTrigger>
+              <TooltipContent side="right">{actor} · human actor</TooltipContent>
+            </Tooltip>
+            <button
+              onClick={toggle}
+              title="Toggle theme"
+              className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-border bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+            >
+              <Icon name={mode === "dark" ? "sun" : "moon"} size={15} />
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 px-1">
+              <div
+                className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                style={{ background: avatarColor(actor) }}
+              >
+                {initials(actor)}
+              </div>
+              <div className="flex-1 leading-[1.15]">
+                <div className="text-[12.5px] font-[550]">{actor}</div>
+                <div className="text-[11px] text-[var(--text-3)]">human actor</div>
+              </div>
+              <button
+                onClick={toggle}
+                title="Toggle theme"
+                className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-border bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+              >
+                <Icon name={mode === "dark" ? "sun" : "moon"} size={15} />
+              </button>
+            </div>
 
-        <UpdateIndicator />
-        <BuildBadge />
+            <UpdateIndicator />
+            <BuildBadge />
+          </>
+        )}
       </div>
     </aside>
   );
