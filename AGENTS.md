@@ -7,6 +7,21 @@ This version has breaking changes — APIs, conventions, and file structure may 
 `next lint` does not exist in this Next.js version — run `npm run lint`
 (a thin wrapper around `eslint` directly) instead.
 
+# Analytics
+
+PostHog is wired in via `components/posthog-provider.tsx` (init + manual
+`$pageview` capture on route change) and mounted in `components/providers.tsx`.
+Session recording is off by default (`disable_session_recording: true`) since
+bead content can be sensitive. Key/host come from `NEXT_PUBLIC_POSTHOG_KEY`
+/ `NEXT_PUBLIC_POSTHOG_HOST`, falling back to a committed default key and
+`https://us.i.posthog.com`.
+
+If you verify PostHog capture behavior with Playwright, launch headed
+(`headless: false`), not headless — PostHog's bot filter checks
+`navigator.userAgentData.brands` for `"HeadlessChrome"` and silently drops
+every capture in default headless Chromium, independent of the `userAgent`
+string or `navigator.webdriver`.
+
 <!-- This section is project-owned and deliberately sits OUTSIDE the generated
      Beads blocks below, which `bd setup` may rewrite. If a generated block ever
      contradicts this section, THIS SECTION WINS. -->
