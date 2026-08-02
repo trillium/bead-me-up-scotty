@@ -22,7 +22,7 @@ import { CopyableId } from "@/components/copyable-id";
 import { FilterBar } from "@/components/filter-bar";
 import { useOrder, useSetOrder } from "@/hooks/use-order";
 import { useSetStatus } from "@/hooks/use-beads";
-import { matchesFilters, emptyFilters, labelOptionsFrom, type Filters } from "@/lib/filters";
+import { matchesFilters, labelOptionsFrom } from "@/lib/filters";
 import { BOARD_COLUMNS, COLUMN_ORDER, colOf } from "@/lib/board-columns";
 import { beadOrigin, originTitle } from "@/lib/attribution";
 import {
@@ -53,14 +53,23 @@ function rankOf(order: string[] | undefined, id: string): number {
 }
 
 export function ListView() {
-  const { beads, index, humanAllowlist, openDetail, openCreate, openEpic, loading, projectId } =
-    useApp();
+  const {
+    beads,
+    index,
+    humanAllowlist,
+    openDetail,
+    openCreate,
+    openEpic,
+    loading,
+    projectId,
+    filters,
+    setFilters,
+  } = useApp();
   const setStatus = useSetStatus();
   const { data: orderData } = useOrder(projectId);
   const setOrder = useSetOrder(projectId);
   const orders = React.useMemo(() => orderData?.orders ?? {}, [orderData]);
 
-  const [filters, setFilters] = React.useState<Filters>(emptyFilters);
   const [showArchived, setShowArchived] = React.useState(false);
   // Derived from ALL beads (not the filtered set) so selecting one label
   // doesn't make the remaining options vanish from the dropdown.

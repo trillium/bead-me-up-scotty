@@ -3,6 +3,7 @@ import * as React from "react";
 import { type BeadType } from "@/lib/schema";
 import type { Bead } from "@/lib/schema";
 import type { Meta } from "@/lib/api-client";
+import type { Filters } from "@/lib/filters";
 
 export type View =
   | "board"
@@ -32,6 +33,11 @@ interface AppContextValue {
   openCreate: (opts?: { parent?: string; type?: BeadType }) => void;
   /** Jump to the Epics screen and focus a specific epic (bead 55b). */
   openEpic: (epicId: string) => void;
+  /** Shared facet filters, so a command spanning Board/List can reach either. */
+  filters: Filters;
+  setFilters: (f: Filters) => void;
+  view: View;
+  setView: (v: View) => void;
 }
 
 const AppContext = React.createContext<AppContextValue | null>(null);

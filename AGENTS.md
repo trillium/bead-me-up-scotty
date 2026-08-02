@@ -65,6 +65,17 @@ bd export --all -o ~/bd-backups/<project>-$(date +%F).jsonl
 
 Git commits still work normally — this section is only about bead/Dolt data.
 
+# Shared UI state and the command bar
+
+`filters`/`setFilters` and `view`/`setView` live in `AppContextValue`
+(`components/app-context.tsx`), owned by `AppShell`, not as per-view local
+state — Board, ListView, and the bottom command bar all read/write the same
+instance via `useApp()`. The command bar's closed phrase-matching engine
+(`lib/command-engine.ts`) is a standalone local port of the manifest pattern
+in `~/code/parlay/docs/COMMAND_DESIGN_CONTRACT.md`, scoped to this app's own
+verbs — it has no runtime dependency on Parlay. Add new voice/typed commands
+by editing that file's `MANIFEST`, not by adding fuzzy/substring matching.
+
 # Durable production launch: `npm run serve`
 
 `npm run serve` (`scripts/serve.mjs`) is the one launch path that survives a
