@@ -18,6 +18,13 @@ import { MarkdownToolbar, applyTransform } from "@/components/markdown-toolbar";
 import { bold, italic, link } from "@/lib/markdown-edit";
 import { AiAssistPanel } from "@/components/ai-assist-panel";
 import {
+  Combobox,
+  ComboboxInputGroup,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxItem,
+} from "@/components/ui/combobox";
+import {
   useUpdateBead,
   useSetStatus,
   useAddComment,
@@ -659,18 +666,35 @@ function DrawerBody({
 
             {addingDep ? (
               <div className="flex items-center gap-[7px] rounded-[9px] border border-border bg-[var(--surface)] p-[9px_11px]">
-                <select
-                  className={`${selectClass} h-8 flex-1`}
-                  value={depTarget}
-                  onChange={(e) => setDepTarget(e.target.value)}
-                >
-                  <option value="">Select bead…</option>
-                  {otherBeads.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.id} · {b.title.slice(0, 40)}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <Combobox<Bead>
+                    items={otherBeads}
+                    value={otherBeads.find((b) => b.id === depTarget) ?? null}
+                    onValueChange={(b) => setDepTarget(b?.id ?? "")}
+                    itemToStringLabel={(b) => `${b.id} · ${b.title.slice(0, 40)}`}
+                    filter={(b, query) => {
+                      const q = query.trim().toLowerCase();
+                      if (!q) return true;
+                      return (
+                        b.id.toLowerCase().includes(q) || b.title.toLowerCase().includes(q)
+                      );
+                    }}
+                  >
+                    <ComboboxInputGroup>
+                      <ComboboxInput
+                        placeholder="Search bead id or title…"
+                        className="h-8"
+                      />
+                    </ComboboxInputGroup>
+                    <ComboboxContent>
+                      {(b: Bead) => (
+                        <ComboboxItem key={b.id} value={b}>
+                          {b.id} · {b.title.slice(0, 40)}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxContent>
+                  </Combobox>
+                </div>
                 <select
                   className={`${selectClass} h-8`}
                   value={depType}
