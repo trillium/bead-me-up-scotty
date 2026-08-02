@@ -24,6 +24,7 @@ import {
   useAddDep,
   useRemoveDep,
   useArchiveBead,
+  useUnarchiveBead,
   useDeleteBead,
   useCreateGate,
 } from "@/hooks/use-beads";
@@ -145,8 +146,10 @@ function DrawerBody({
   const addDep = useAddDep();
   const removeDep = useRemoveDep();
   const archive = useArchiveBead();
+  const unarchive = useUnarchiveBead();
   const del = useDeleteBead();
   const createGate = useCreateGate();
+  const isArchived = (bead.labels ?? []).includes(ARCHIVED_LABEL);
 
   const [draft, setDraft] = React.useState("");
   const [addingDep, setAddingDep] = React.useState(false);
@@ -272,9 +275,15 @@ function DrawerBody({
         >
           <Icon name="pencil" size={15} />
         </IconBtn>
-        <IconBtn title="Archive (close + label)" onClick={() => archive.mutate(bead.id)}>
-          <Icon name="archive" size={15} />
-        </IconBtn>
+        {isArchived ? (
+          <IconBtn title="Unarchive (reopen + remove label)" onClick={() => unarchive.mutate(bead.id)}>
+            <Icon name="archive" size={15} />
+          </IconBtn>
+        ) : (
+          <IconBtn title="Archive (close + label)" onClick={() => archive.mutate(bead.id)}>
+            <Icon name="archive" size={15} />
+          </IconBtn>
+        )}
         <IconBtn
           title="Delete"
           danger
@@ -1019,7 +1028,7 @@ function LabelsField({
         {isArchived && (
           <span
             className={`${labelChipClass} opacity-70`}
-            title="This bead is archived. Use the archive button in the header to change that."
+            title="This bead is archived. Use the Unarchive button in the header to reverse that."
           >
             <Icon name="archive" size={10} />
             {ARCHIVED_LABEL}
