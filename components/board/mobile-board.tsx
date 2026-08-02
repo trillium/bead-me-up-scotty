@@ -31,13 +31,13 @@ import {
  */
 export function MobileBoard({
   columns,
-  childCounts,
+  childProgress,
   doneWindow,
   onDoneWindowChange,
   onSetStatus,
 }: {
   columns: { col: BoardColumn; cards: Bead[] }[];
-  childCounts: Map<string, number>;
+  childProgress: Map<string, { closed: number; total: number; pct: number }>;
   doneWindow: number | null;
   onDoneWindowChange: (v: number | null) => void;
   onSetStatus: (id: string, status: string) => void;
@@ -120,7 +120,7 @@ export function MobileBoard({
               <MobileBeadRow
                 key={b.id}
                 bead={b}
-                childCount={childCounts.get(b.id) ?? 0}
+                progress={childProgress.get(b.id)}
                 onChangeStatus={() => setStatusBead(b)}
               />
             ))}
@@ -143,11 +143,11 @@ export function MobileBoard({
 
 function MobileBeadRow({
   bead,
-  childCount,
+  progress,
   onChangeStatus,
 }: {
   bead: Bead;
-  childCount: number;
+  progress?: { closed: number; total: number; pct: number };
   onChangeStatus: () => void;
 }) {
   const { index, humanAllowlist, openDetail } = useApp();
@@ -272,13 +272,17 @@ function MobileBeadRow({
             </span>
           </span>
         )}
-        {childCount > 0 && (
+        {progress && progress.total > 0 && (
           <span
-            title={`${childCount} subtask${childCount === 1 ? "" : "s"}`}
-            className="inline-flex items-center gap-1 rounded-md border border-border bg-[var(--surface-2)] px-[6px] py-px text-[10.5px] font-[550] text-[var(--text-3)]"
+            title={`${progress.closed}/${progress.total} subtasks done`}
+            className="inline-flex items-center gap-1 rounded-md border border-border bg-[var(--surface-2)] px-[6px] py-px font-[550]"
+            style={{
+              fontSize: "10.5px",
+              color: progress.closed === progress.total ? "#16a34a" : "var(--text-3)",
+            }}
           >
             <Icon name="list" size={11} className="flex-shrink-0" />
-            {childCount}
+            {progress.closed}/{progress.total}
           </span>
         )}
       </div>

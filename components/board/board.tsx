@@ -14,7 +14,7 @@ import { useApp } from "@/components/app-context";
 import { useSetStatus } from "@/hooks/use-beads";
 import { useOrder, useSetOrder } from "@/hooks/use-order";
 import { useBoardPrefs } from "@/hooks/use-board-prefs";
-import { isBlocked, childrenCountMap } from "@/lib/beads-view";
+import { isBlocked, childrenCountMap, epicProgress } from "@/lib/beads-view";
 import { FilterBar } from "@/components/filter-bar";
 import { matchesFilters, labelOptionsFrom } from "@/lib/filters";
 import type { Bead } from "@/lib/schema";
@@ -35,8 +35,14 @@ export function Board() {
   // doesn't make the remaining options vanish from the dropdown.
   const labelOptions = React.useMemo(() => labelOptionsFrom(beads), [beads]);
   // One pass over all beads, not childrenOf() per card — that would be O(n^2)
-  // on a large board.
+  // on a large board; epicProgress (closed/total math reused as-is) then only
+  // runs for ids that actually have children.
   const childCounts = React.useMemo(() => childrenCountMap(beads), [beads]);
+  const childProgress = React.useMemo(() => {
+    const m = new Map<string, { closed: number; total: number; pct: number }>();
+    for (const id of childCounts.keys()) m.set(id, epicProgress(id, beads));
+    return m;
+  }, [childCounts, beads]);
   // Time-window filter for the Done column: null = all, else "closed within N days" (bead nad).
   const [doneWindow, setDoneWindow] = React.useState<number | null>(null);
   // Mount-time "now" for the window cutoff — captured once (day-granular, so it
@@ -162,7 +168,7 @@ export function Board() {
             <div className="h-full min-h-0 md:hidden">
               <MobileBoard
                 columns={shownColumns}
-                childCounts={childCounts}
+                childProgress={childProgress}
                 doneWindow={doneWindow}
                 onDoneWindowChange={setDoneWindow}
                 onSetStatus={(id, status) => setStatus.mutate({ id, status })}
@@ -176,7 +182,7 @@ export function Board() {
                     key={col.id}
                     col={col}
                     cards={cards}
-                    childCounts={childCounts}
+                    childProgress={childProgress}
                     control={
                       col.id === "done" ? (
                         <select

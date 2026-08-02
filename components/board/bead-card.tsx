@@ -21,7 +21,13 @@ import {
   checklistProgress,
 } from "@/lib/beads-view";
 
-export function BeadCard({ bead, childCount = 0 }: { bead: Bead; childCount?: number }) {
+export function BeadCard({
+  bead,
+  progress,
+}: {
+  bead: Bead;
+  progress?: { closed: number; total: number; pct: number };
+}) {
   const { index, humanAllowlist, openDetail } = useApp();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: bead.id,
@@ -153,16 +159,20 @@ export function BeadCard({ bead, childCount = 0 }: { bead: Bead; childCount?: nu
             </span>
           </span>
         )}
-        {/* Subtask count — distinct from depCount, which deliberately excludes
-            parent-child edges. Counted once per render by the board/list, not
-            per card, to avoid an O(n^2) scan. */}
-        {childCount > 0 && (
+        {/* Subtask progress — distinct from depCount, which deliberately
+            excludes parent-child edges. Computed once per render by the
+            board/list, not per card, to avoid an O(n^2) scan. */}
+        {progress && progress.total > 0 && (
           <span
-            title={`${childCount} subtask${childCount === 1 ? "" : "s"}`}
-            className="inline-flex items-center gap-1 rounded-md border border-border bg-[var(--surface-2)] px-[6px] py-px text-[10.5px] font-[550] text-[var(--text-3)]"
+            title={`${progress.closed}/${progress.total} subtasks done`}
+            className="inline-flex items-center gap-1 rounded-md border border-border bg-[var(--surface-2)] px-[6px] py-px font-[550]"
+            style={{
+              fontSize: "10.5px",
+              color: progress.closed === progress.total ? "#16a34a" : "var(--text-3)",
+            }}
           >
             <Icon name="list" size={11} className="flex-shrink-0" />
-            {childCount}
+            {progress.closed}/{progress.total}
           </span>
         )}
       </div>
