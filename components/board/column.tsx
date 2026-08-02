@@ -17,13 +17,13 @@ export interface ColumnDef {
 export function Column({
   col,
   cards,
-  childCounts,
+  childProgress,
   control,
 }: {
   col: ColumnDef;
   cards: Bead[];
-  /** id -> number of parent-child children, computed once by the board. */
-  childCounts?: Map<string, number>;
+  /** id -> closed/total children progress, computed once by the board. */
+  childProgress?: Map<string, { closed: number; total: number; pct: number }>;
   control?: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id, disabled: !col.droppable });
@@ -51,7 +51,7 @@ export function Column({
       >
         <SortableContext items={cards.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           {cards.map((b) => (
-            <BeadCard key={b.id} bead={b} childCount={childCounts?.get(b.id) ?? 0} />
+            <BeadCard key={b.id} bead={b} progress={childProgress?.get(b.id)} />
           ))}
         </SortableContext>
         {cards.length === 0 && (

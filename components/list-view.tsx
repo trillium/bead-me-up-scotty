@@ -34,6 +34,7 @@ import {
   isBlocked,
   parentOf,
   childrenCountMap,
+  epicProgress,
   relTime,
   fmtDateTime,
 } from "@/lib/beads-view";
@@ -74,8 +75,15 @@ export function ListView() {
   // Derived from ALL beads (not the filtered set) so selecting one label
   // doesn't make the remaining options vanish from the dropdown.
   const labelOptions = React.useMemo(() => labelOptionsFrom(beads), [beads]);
-  // One pass, not childrenOf() per row (that would be O(n^2)).
+  // One pass, not childrenOf() per row (that would be O(n^2)); epicProgress
+  // (closed/total math reused as-is) then only runs for ids that actually
+  // have children, not every row.
   const childCounts = React.useMemo(() => childrenCountMap(beads), [beads]);
+  const childProgress = React.useMemo(() => {
+    const m = new Map<string, { closed: number; total: number; pct: number }>();
+    for (const id of childCounts.keys()) m.set(id, epicProgress(id, beads));
+    return m;
+  }, [childCounts, beads]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -221,7 +229,7 @@ export function ListView() {
                         parent={parentOf(b, index)}
                         onOpenParent={openEpic}
                         onOpenDetail={openDetail}
-                        childCount={childCounts.get(b.id) ?? 0}
+                        progress={childProgress.get(b.id)}
                         humanAllowlist={humanAllowlist}
                       />
                     </React.Fragment>
@@ -243,7 +251,7 @@ function Row({
   parent,
   onOpenParent,
   onOpenDetail,
-  childCount,
+  progress,
   humanAllowlist,
 }: {
   bead: Bead;
@@ -252,7 +260,7 @@ function Row({
   parent: Bead | null;
   onOpenParent: (id: string) => void;
   onOpenDetail: (id: string) => void;
-  childCount: number;
+  progress?: { closed: number; total: number; pct: number };
   humanAllowlist: string[];
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -312,13 +320,14 @@ function Row({
       ))}
       {/* The epic is shown because it now INFLUENCES the sort order (gh-18):
           a ranking whose reason isn't on screen reads as a bug. */}
-      {childCount > 0 && (
+      {progress && progress.total > 0 && (
         <span
-          title={`${childCount} subtask${childCount === 1 ? "" : "s"}`}
-          className="hidden flex-shrink-0 items-center gap-[4px] rounded-md border border-border bg-[var(--surface-2)] px-[6px] py-px text-[10.5px] text-[var(--text-3)] lg:flex"
+          title={`${progress.closed}/${progress.total} subtasks done`}
+          className="hidden flex-shrink-0 items-center gap-[4px] rounded-md border border-border bg-[var(--surface-2)] px-[6px] py-px font-mono text-[10.5px] lg:flex"
+          style={{ color: progress.closed === progress.total ? "#16a34a" : "var(--text-3)" }}
         >
           <Icon name="list" size={10} className="flex-shrink-0" />
-          {childCount}
+          {progress.closed}/{progress.total}
         </span>
       )}
       {/* Shown because the parent now INFLUENCES the sort order (gh-18): a
