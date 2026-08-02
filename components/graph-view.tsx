@@ -26,6 +26,7 @@ function BeadNode({ data }: NodeProps) {
   return (
     <div
       onClick={() => onOpen(bead.id)}
+      title={bead.title}
       className="w-[150px] cursor-pointer rounded-[11px] border border-border bg-[var(--surface)] p-[9px_11px] shadow-[var(--shadow)] hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-lg)]"
     >
       <Handle type="target" position={Position.Top} style={{ background: "var(--text-3)" }} />
@@ -35,7 +36,7 @@ function BeadNode({ data }: NodeProps) {
         <span className="flex-1" />
         <Icon name={typeIconName(bead.issue_type)} size={12} style={{ color: typeColor(bead.issue_type) }} />
       </div>
-      <div className="text-[12px] font-[550] leading-[1.3] text-[var(--text)] [text-wrap:pretty]">
+      <div className="line-clamp-2 text-[12px] font-[550] leading-[1.3] text-[var(--text)] [text-wrap:pretty]">
         {bead.title.replace(/\s*\([^)]*\)\s*/, "")}
       </div>
       <Handle type="source" position={Position.Bottom} style={{ background: "var(--text-3)" }} />
@@ -54,7 +55,10 @@ function layout(beads: Bead[], onOpen: (id: string) => void): { nodes: Node[]; e
 
   const nodes: Node[] = [];
   const COL = 230;
-  const ROW = 116;
+  const ROW = 132;
+  // Small alternating x-offset for an epic's children so a sibling-blocks-sibling
+  // edge isn't a vertical line running through the stacked column between them.
+  const CHILD_STAGGER = Math.round(COL * 0.2);
 
   epics.forEach((e, ci) => {
     nodes.push({
@@ -64,10 +68,11 @@ function layout(beads: Bead[], onOpen: (id: string) => void): { nodes: Node[]; e
       data: { bead: e, onOpen },
     });
     childrenOf(e.id, beads).forEach((k, ri) => {
+      const stagger = ri % 2 === 0 ? -CHILD_STAGGER : CHILD_STAGGER;
       nodes.push({
         id: k.id,
         type: "bead",
-        position: { x: ci * COL, y: (ri + 1) * ROW },
+        position: { x: ci * COL + stagger, y: (ri + 1) * ROW },
         data: { bead: k, onOpen },
       });
     });
