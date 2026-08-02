@@ -9,6 +9,7 @@ import { useApp } from "@/components/app-context";
 import { api, type DoctorResponse } from "@/lib/api-client";
 import { useNotificationPrefs, type NotifPrefs } from "@/hooks/use-notifications";
 import { useBoardPrefs } from "@/hooks/use-board-prefs";
+import { SHORTCUTS } from "@/lib/shortcuts";
 
 const inputClass =
   "h-[38px] rounded-[9px] border border-border bg-[var(--surface-2)] px-3 text-[12.5px] text-[var(--text)] outline-none focus:border-[var(--brand)]";
@@ -223,13 +224,7 @@ function SettingsForm({ data }: { data: DoctorResponse }) {
 
       <Card title="Keyboard shortcuts">
         <div className="flex flex-col gap-[10px]">
-          {[
-            { keys: ["⌘", "K"], label: "Open the command palette" },
-            { keys: ["N"], label: "Create a new bead" },
-            { keys: ["/"], label: "Focus the search box" },
-            { keys: ["T"], label: "Toggle light / dark theme" },
-            { keys: ["Esc"], label: "Close the open drawer or dialog" },
-          ].map((s) => (
+          {SHORTCUTS.map((s) => (
             <div key={s.label} className="flex items-center justify-between">
               <span className="text-[13px] text-[var(--text-2)]">{s.label}</span>
               <span className="flex items-center gap-1">

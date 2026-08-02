@@ -27,6 +27,7 @@ import { SettingsView } from "@/components/settings-view";
 import { BeadDetailDrawer } from "@/components/bead-detail-drawer";
 import { CreateBeadModal } from "@/components/create-bead-modal";
 import { CommandPalette } from "@/components/command-palette";
+import { ShortcutsHelp } from "@/components/shortcuts-help";
 import { NotificationWatcher } from "@/components/notification-watcher";
 
 export function AppShell({ projectId }: { projectId: string }) {
@@ -42,6 +43,7 @@ export function AppShell({ projectId }: { projectId: string }) {
   const [openStack, setOpenStack] = React.useState<string[]>([]);
   const openId = openStack.length ? openStack[openStack.length - 1] : null;
   const [palette, setPalette] = React.useState(false);
+  const [shortcutsHelp, setShortcutsHelp] = React.useState(false);
   // The 228px persistent rail is hidden below md (bead beadui-mobile) — on a
   // phone it would eat well over half the viewport, so nav moves into this
   // slide-in sheet instead.
@@ -104,7 +106,8 @@ export function AppShell({ projectId }: { projectId: string }) {
     [setView],
   );
 
-  // keyboard: Cmd/Ctrl+K = command palette, n = new, / = focus search, t = toggle theme, Esc = close overlays
+  // keyboard: Cmd/Ctrl+K = command palette, n = new, / = focus search, t = toggle theme,
+  // ? = shortcuts help, Esc = close overlays
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
@@ -132,6 +135,10 @@ export function AppShell({ projectId }: { projectId: string }) {
       if (e.key === "t" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         toggleTheme();
+      }
+      if (e.key === "?") {
+        e.preventDefault();
+        setShortcutsHelp(true);
       }
     };
     window.addEventListener("keydown", handler);
@@ -170,6 +177,7 @@ export function AppShell({ projectId }: { projectId: string }) {
           className="hidden md:flex"
           collapsed={sidebarCollapsed}
           onToggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onOpenShortcuts={() => setShortcutsHelp(true)}
         />
         <main
           className="relative flex min-w-0 flex-1 flex-col"
@@ -254,6 +262,7 @@ export function AppShell({ projectId }: { projectId: string }) {
       />
 
       <CommandPalette open={palette} onOpenChange={setPalette} onView={setView} />
+      <ShortcutsHelp open={shortcutsHelp} onOpenChange={setShortcutsHelp} />
       <NotificationWatcher projectId={projectId} />
       <CommandBar />
     </AppProvider>
