@@ -219,15 +219,31 @@ export function useDismissHuman() {
   );
 }
 
-export function useArchiveBead() {
+export function useUnarchiveBead() {
   const { projectId } = useApp();
   const qc = useQueryClient();
   return useMutation(
     mutationToast<string, Bead>(
-      (id) => api.archive(projectId, id),
-      (id) => `Archived ${id} · bd close + label`,
+      (id) => api.unarchive(projectId, id),
+      (id) => `Unarchived ${id} · bd update + label`,
       qc,
       beadsKey(projectId),
     ),
   );
+}
+
+export function useArchiveBead() {
+  const { projectId } = useApp();
+  const qc = useQueryClient();
+  const unarchive = useUnarchiveBead();
+  return useMutation({
+    mutationFn: (id: string) => api.archive(projectId, id),
+    onSuccess: (_res, id) => {
+      toast.success(`Archived ${id} · bd close + label`, {
+        action: { label: "Undo", onClick: () => unarchive.mutate(id) },
+      });
+      qc.invalidateQueries({ queryKey: beadsKey(projectId) });
+    },
+    onError: (err) => toastError(err),
+  });
 }

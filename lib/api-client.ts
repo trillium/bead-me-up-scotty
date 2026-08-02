@@ -189,6 +189,8 @@ export const api = {
     }),
   archive: (projectId: string, id: string) =>
     request<Bead>(`${base(projectId)}/beads/${enc(id)}/archive`, { method: "POST" }),
+  unarchive: (projectId: string, id: string) =>
+    request<Bead>(`${base(projectId)}/beads/${enc(id)}/unarchive`, { method: "POST" }),
   doctor: (projectId: string) => request<DoctorResponse>(`${base(projectId)}/doctor`),
 
   activity: (projectId: string) => request<ActivityResponse>(`${base(projectId)}/activity`),
