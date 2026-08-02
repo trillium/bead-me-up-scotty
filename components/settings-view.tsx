@@ -10,6 +10,7 @@ import { api, type DoctorResponse } from "@/lib/api-client";
 import { useNotificationPrefs, type NotifPrefs } from "@/hooks/use-notifications";
 import { useBoardPrefs } from "@/hooks/use-board-prefs";
 import { SHORTCUTS } from "@/lib/shortcuts";
+import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 const inputClass =
   "h-[38px] rounded-[9px] border border-border bg-[var(--surface-2)] px-3 text-[12.5px] text-[var(--text)] outline-none focus:border-[var(--brand)]";
@@ -214,6 +215,8 @@ function SettingsForm({ data }: { data: DoctorResponse }) {
         </div>
       </Card>
 
+      <InstallAppCard />
+
       <BoardCard />
 
       <UpdatesCard />
@@ -293,6 +296,30 @@ function BoardCard() {
             );
           })}
         </div>
+      </div>
+    </Card>
+  );
+}
+
+function InstallAppCard() {
+  const { canInstall, promptInstall } = useInstallPrompt();
+  if (!canInstall) return null;
+  return (
+    <Card title="App">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <div className="text-[13px]">Install app</div>
+          <div className="text-[11.5px] text-[var(--text-3)]">
+            Run in its own window, off the browser chrome, with an icon in your dock or home screen.
+          </div>
+        </div>
+        <button
+          onClick={promptInstall}
+          className="flex h-[34px] flex-shrink-0 items-center gap-[7px] rounded-[9px] border border-border bg-[var(--surface-2)] px-[13px] text-[12.5px] hover:bg-[var(--surface-3)]"
+        >
+          <Icon name="download" size={14} />
+          <span>Install app</span>
+        </button>
       </div>
     </Card>
   );
