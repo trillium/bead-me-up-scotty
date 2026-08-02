@@ -6,13 +6,24 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
+interface InstallPromptContextValue {
+  canInstall: boolean;
+  promptInstall: () => Promise<void>;
+}
+
+const InstallPromptContext = React.createContext<InstallPromptContextValue>({
+  canInstall: false,
+  promptInstall: async () => {},
+});
+
 /**
- * Wraps the browser's `beforeinstallprompt` flow. The event only fires once
- * per page load (and never at all in browsers without install support, or
- * once the app is already installed), so we stash it until the caller wants
- * to show the native prompt via promptInstall().
+ * Owns the beforeinstallprompt/appinstalled listeners at the app root. The
+ * event fires once, early in the page lifetime — often before a user has
+ * navigated to Settings — so the listener must be mounted for the whole
+ * page lifetime (here) rather than only while the Settings UI that
+ * surfaces it is on screen, or the event is dropped and never recoverable.
  */
-export function useInstallPrompt() {
+export function InstallPromptProvider({ children }: { children: React.ReactNode }) {
   const [deferredEvent, setDeferredEvent] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = React.useState(
     () => typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches,
@@ -50,8 +61,14 @@ export function useInstallPrompt() {
     setDeferredEvent(null);
   }, [deferredEvent]);
 
-  return {
-    canInstall: !installed && !!deferredEvent,
-    promptInstall,
-  };
+  const value = React.useMemo(
+    () => ({ canInstall: !installed && !!deferredEvent, promptInstall }),
+    [installed, deferredEvent, promptInstall],
+  );
+
+  return <InstallPromptContext.Provider value={value}>{children}</InstallPromptContext.Provider>;
+}
+
+export function useInstallPrompt() {
+  return React.useContext(InstallPromptContext);
 }

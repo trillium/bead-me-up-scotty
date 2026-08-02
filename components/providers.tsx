@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { RegisterServiceWorker } from "@/components/register-sw";
 import { PostHogProvider } from "@/components/posthog-provider";
+import { InstallPromptProvider } from "@/components/install-prompt-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = React.useState(
@@ -20,9 +21,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={client}>
       <ThemeProvider>
         <RegisterServiceWorker />
-        <PostHogProvider>
-          <TooltipProvider>{children}</TooltipProvider>
-        </PostHogProvider>
+        <InstallPromptProvider>
+          <PostHogProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </PostHogProvider>
+        </InstallPromptProvider>
         <Toaster position="bottom-center" />
       </ThemeProvider>
     </QueryClientProvider>

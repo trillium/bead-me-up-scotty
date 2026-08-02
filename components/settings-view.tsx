@@ -10,7 +10,7 @@ import { api, type DoctorResponse } from "@/lib/api-client";
 import { useNotificationPrefs, type NotifPrefs } from "@/hooks/use-notifications";
 import { useBoardPrefs } from "@/hooks/use-board-prefs";
 import { SHORTCUTS } from "@/lib/shortcuts";
-import { useInstallPrompt } from "@/hooks/use-install-prompt";
+import { useInstallPrompt } from "@/components/install-prompt-provider";
 
 const inputClass =
   "h-[38px] rounded-[9px] border border-border bg-[var(--surface-2)] px-3 text-[12.5px] text-[var(--text)] outline-none focus:border-[var(--brand)]";
