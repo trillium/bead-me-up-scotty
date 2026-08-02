@@ -58,6 +58,7 @@ export function Sidebar({
   className,
   collapsed = false,
   onToggleCollapsed,
+  onOpenShortcuts,
 }: {
   view: View;
   onView: (v: View) => void;
@@ -71,6 +72,8 @@ export function Sidebar({
    * rail supports this — the mobile sheet copy never passes these props. */
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  /** Opens the keyboard-shortcuts overlay (bead beadui-shortcuts-help). Omit to hide the entry point. */
+  onOpenShortcuts?: () => void;
 }) {
   const { mode, toggle } = useTheme();
   const { meta, beads, index } = useApp();
@@ -238,6 +241,21 @@ export function Sidebar({
               </TooltipTrigger>
               <TooltipContent side="right">{actor} · human actor</TooltipContent>
             </Tooltip>
+            {onOpenShortcuts && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      onClick={onOpenShortcuts}
+                      className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-border bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+                    />
+                  }
+                >
+                  <Icon name="help" size={15} />
+                </TooltipTrigger>
+                <TooltipContent side="right">Keyboard shortcuts</TooltipContent>
+              </Tooltip>
+            )}
             <button
               onClick={toggle}
               title="Toggle theme"
@@ -259,6 +277,16 @@ export function Sidebar({
                 <div className="text-[12.5px] font-[550]">{actor}</div>
                 <div className="text-[11px] text-[var(--text-3)]">human actor</div>
               </div>
+              {onOpenShortcuts && (
+                <button
+                  onClick={onOpenShortcuts}
+                  title="Keyboard shortcuts"
+                  aria-label="Keyboard shortcuts"
+                  className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-border bg-[var(--surface)] text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+                >
+                  <Icon name="help" size={15} />
+                </button>
+              )}
               <button
                 onClick={toggle}
                 title="Toggle theme"
