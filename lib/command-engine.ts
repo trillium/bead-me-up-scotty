@@ -16,6 +16,7 @@ export type Verb =
   | "clearFilters"
   | "switchView"
   | "openBead"
+  | "lookupBead"
   | "clear";
 
 export interface Command {
@@ -35,6 +36,7 @@ export type CommandResult =
   | { verb: "clearFilters" }
   | { verb: "switchView"; view: View }
   | { verb: "openBead"; id: string }
+  | { verb: "lookupBead"; id: string }
   | { verb: "clear" };
 
 export interface CommandContext {
@@ -96,6 +98,20 @@ export const MANIFEST: Command[] = [
     phrases: ["open {id}", "open bead {id}", "go to bead {id}", "jump to {id}"],
     mode: "whole",
     priority: 50,
+    verb: "openBead",
+  },
+  {
+    // A BARE bead reference typed on its own — "task-jodb", "brain-av6h",
+    // "review-3c71.2" — with no "open " prefix. This is deliberately the
+    // lowest-priority match before "clear": a `{id}` slot structurally matches
+    // ANY single input, so every real command above must get first refusal.
+    // resolveVerb gates it on the bead-id SHAPE (see isBeadIdShape), so plain
+    // words ("board", "never mind") fall through to their own commands or the
+    // no-match hint rather than being treated as ids.
+    id: "bare-bead",
+    phrases: ["{id}"],
+    mode: "whole",
+    priority: 55,
     verb: "openBead",
   },
   {
@@ -234,6 +250,36 @@ function resolveBeadId(raw: string, index: Map<string, Bead>): string | null {
   return null;
 }
 
+/**
+ * A bare beads id: `<store>-<suffix>`, single token, no spaces. Store is a
+ * federation prefix (`task`, `brain`, `review`, and hyphenated ones like
+ * `nightshift-tasks`); suffix is the short beads id (`jodb`, `av6h`, `449q`),
+ * optionally with a `.N` sub-issue segment (`3c71.2`). This is a SHAPE gate,
+ * not a store allowlist — a well-formed shape that names no real bead resolves
+ * to the clean not-found state, so we don't hard-code the store list here.
+ */
+const BEAD_ID_SHAPE = /^[a-z][a-z0-9_]*(?:-[a-z0-9]+)+(?:\.[0-9]+)?$/i;
+
+export function isBeadIdShape(raw: string): boolean {
+  return BEAD_ID_SHAPE.test(raw.trim());
+}
+
+/**
+ * Resolve a bead reference to an action. If the id is already in the loaded
+ * index, open it directly (canonical-cased). Otherwise, if it merely LOOKS like
+ * a bead id, defer to an async server lookup (`lookupBead`) — the common
+ * cross-store case, since the client index only holds the current project's
+ * beads. Anything that isn't a bead-id shape returns null so the caller can
+ * fall through to the next command / the no-match hint.
+ */
+function resolveBeadRef(raw: string, index: Map<string, Bead>): CommandResult | null {
+  const canonical = resolveBeadId(raw, index);
+  if (canonical) return { verb: "openBead", id: canonical };
+  const norm = raw.trim().toLowerCase();
+  if (isBeadIdShape(norm)) return { verb: "lookupBead", id: norm };
+  return null;
+}
+
 function resolveVerb(
   verb: Verb,
   args: Record<string, string>,
@@ -258,10 +304,12 @@ function resolveVerb(
       const view = resolveView(args.view ?? "");
       return view ? { verb, view } : null;
     }
-    case "openBead": {
-      const id = resolveBeadId(args.id ?? "", ctx.index);
-      return id ? { verb, id } : null;
-    }
+    case "openBead":
+    case "lookupBead":
+      // Both the "open {id}" phrasings and the bare-id command route here; the
+      // resulting verb (openBead vs lookupBead) is decided by whether the id is
+      // already loaded, not by which phrase matched.
+      return resolveBeadRef(args.id ?? "", ctx.index);
     case "clear":
       return { verb };
   }
