@@ -97,10 +97,18 @@ export function AppShell({ projectId }: { projectId: string }) {
   const backDetail = React.useCallback(() => {
     setOpenStack((s) => {
       const next = s.slice(0, -1);
-      while (next.length && !index.has(next[next.length - 1])) next.pop();
+      // A cross-store bead surfaced via openExternal isn't in `index`; keep its
+      // id in the trail so back can return to it instead of closing the drawer.
+      while (
+        next.length &&
+        !index.has(next[next.length - 1]) &&
+        next[next.length - 1] !== externalBead?.id
+      ) {
+        next.pop();
+      }
       return next;
     });
-  }, [index]);
+  }, [index, externalBead]);
   // Options object rather than positional args so future presets (assignee,
   // priority) can be added without churning every call site again.
   const openCreate = React.useCallback(

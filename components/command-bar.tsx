@@ -3,7 +3,7 @@ import * as React from "react";
 import { useApp } from "@/components/app-context";
 import { emptyFilters } from "@/lib/filters";
 import { resolveCommandInput, NO_MATCH_HINT } from "@/lib/command-engine";
-import { api } from "@/lib/api-client";
+import { api, ApiError } from "@/lib/api-client";
 
 /**
  * Persistent bottom command bar (beadui-voicebar): a plain text input so
@@ -22,6 +22,10 @@ export function CommandBar() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Every submission supersedes any in-flight lookup — an old fetch that
+    // resolves after `show open`/`clear`/an indexed id/invalid input must NOT
+    // clobber the newer result. Stamp once here; runLookup keys off this value.
+    const seq = ++lookupSeq.current;
     const trimmed = text.trim();
     if (!trimmed) return;
 
@@ -54,7 +58,7 @@ export function CommandBar() {
         // A bare id that isn't in the loaded index — resolve it server-side
         // (the beads binary reaches any federated store) and surface it. The
         // input stays put with a "looking up" hint until the fetch resolves.
-        runLookup(result.id);
+        runLookup(result.id, seq);
         return;
       case "clear":
         break;
@@ -63,8 +67,7 @@ export function CommandBar() {
     setText("");
   };
 
-  const runLookup = (id: string) => {
-    const seq = ++lookupSeq.current;
+  const runLookup = (id: string, seq: number) => {
     setHint(`Looking up ${id}…`);
     api
       .get(projectId, id)
@@ -74,9 +77,17 @@ export function CommandBar() {
         setHint(null);
         setText("");
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (seq !== lookupSeq.current) return;
-        setHint(`No bead ${id}`);
+        // "No bead" only for a confirmed not-found (the route answers 404 when
+        // the id resolves nowhere in the federation). Server errors, network
+        // failures, etc. are a different problem — say so instead of lying that
+        // the bead doesn't exist.
+        setHint(
+          err instanceof ApiError && err.status === 404
+            ? `No bead ${id}`
+            : `Lookup failed for ${id}`,
+        );
       });
   };
 
