@@ -27,6 +27,12 @@ interface AppContextValue {
   error?: string;
   /** Open a bead, STARTING A FRESH trail (clears any back history). */
   openDetail: (id: string) => void;
+  /**
+   * Surface a bead fetched OUTSIDE the loaded index (the cross-store command-bar
+   * lookup): the drawer can't find it in `index`, so the whole record is handed
+   * in and shown directly. Starts a fresh trail like openDetail.
+   */
+  openExternal: (bead: Bead) => void;
   /** Open a bead, PUSHING onto the trail so back returns here. Drawer-internal only. */
   pushDetail: (id: string) => void;
   /** Open the create dialog, optionally presetting the parent and/or the type. */

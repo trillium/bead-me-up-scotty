@@ -74,12 +74,19 @@ const labelChipClass =
 
 export function BeadDetailDrawer({
   openId,
+  externalBead,
   canGoBack,
   backTo,
   onBack,
   onClose,
 }: {
   openId: string | null;
+  /**
+   * A bead surfaced from outside the loaded index (cross-store command-bar
+   * lookup). Used only when `openId` isn't in `index` — the common case for a
+   * foreign-store id the current project never loaded.
+   */
+  externalBead?: Bead | null;
   /** True when a trail exists behind the current bead (GH #15). */
   canGoBack?: boolean;
   /** Id the back control returns to — used to NAME the destination. */
@@ -88,7 +95,9 @@ export function BeadDetailDrawer({
   onClose: () => void;
 }) {
   const { index } = useApp();
-  const bead = openId ? index.get(openId) : undefined;
+  const bead =
+    (openId ? index.get(openId) : undefined) ??
+    (externalBead && externalBead.id === openId ? externalBead : undefined);
   // ~50% wider than the old 480px default; drag the left edge to resize (persisted).
   const { width, startResize } = useResizableWidth({
     storageKey: "bmus.width.drawer",

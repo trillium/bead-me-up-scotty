@@ -61,6 +61,14 @@ async function runBdRaw(
     if (/pending schema migration|BD_ALLOW_REMOTE_MIGRATE|#4259/i.test(stderr)) {
       throw new BdError(stderr, "schema_migration_required");
     }
+    // A lookup for an id that doesn't exist (in this OR any federated store)
+    // exits non-zero with a plain "Error fetching <id>: no issue found …" line
+    // ahead of the JSON envelope, so the JSON.parse above misses it and it would
+    // otherwise fall through uncoded. Tag it `not_found` so store.get() returns
+    // null and the single-bead route answers a clean 404 instead of a 400.
+    if (/no issues? found matching/i.test(stderr)) {
+      throw new BdError(stderr, "not_found");
+    }
     throw new BdError(stderr || e.message || "bd command failed");
   }
 }

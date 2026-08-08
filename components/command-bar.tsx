@@ -3,6 +3,7 @@ import * as React from "react";
 import { useApp } from "@/components/app-context";
 import { emptyFilters } from "@/lib/filters";
 import { resolveCommandInput, NO_MATCH_HINT } from "@/lib/command-engine";
+import { api, ApiError } from "@/lib/api-client";
 
 /**
  * Persistent bottom command bar (beadui-voicebar): a plain text input so
@@ -12,12 +13,19 @@ import { resolveCommandInput, NO_MATCH_HINT } from "@/lib/command-engine";
  * lib/command-engine.ts; a non-match shows an inline hint and changes nothing.
  */
 export function CommandBar() {
-  const { filters, setFilters, setView, index, openDetail } = useApp();
+  const { filters, setFilters, setView, index, openDetail, openExternal, projectId } = useApp();
   const [text, setText] = React.useState("");
   const [hint, setHint] = React.useState<string | null>(null);
+  // Guards a stale lookup from surfacing after a newer submit — only the most
+  // recent lookup's result is allowed to open a bead or set the hint.
+  const lookupSeq = React.useRef(0);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Every submission supersedes any in-flight lookup — an old fetch that
+    // resolves after `show open`/`clear`/an indexed id/invalid input must NOT
+    // clobber the newer result. Stamp once here; runLookup keys off this value.
+    const seq = ++lookupSeq.current;
     const trimmed = text.trim();
     if (!trimmed) return;
 
@@ -46,11 +54,41 @@ export function CommandBar() {
       case "openBead":
         openDetail(result.id);
         break;
+      case "lookupBead":
+        // A bare id that isn't in the loaded index — resolve it server-side
+        // (the beads binary reaches any federated store) and surface it. The
+        // input stays put with a "looking up" hint until the fetch resolves.
+        runLookup(result.id, seq);
+        return;
       case "clear":
         break;
     }
     setHint(null);
     setText("");
+  };
+
+  const runLookup = (id: string, seq: number) => {
+    setHint(`Looking up ${id}…`);
+    api
+      .get(projectId, id)
+      .then((bead) => {
+        if (seq !== lookupSeq.current) return; // superseded by a newer submit
+        openExternal(bead);
+        setHint(null);
+        setText("");
+      })
+      .catch((err: unknown) => {
+        if (seq !== lookupSeq.current) return;
+        // "No bead" only for a confirmed not-found (the route answers 404 when
+        // the id resolves nowhere in the federation). Server errors, network
+        // failures, etc. are a different problem — say so instead of lying that
+        // the bead doesn't exist.
+        setHint(
+          err instanceof ApiError && err.status === 404
+            ? `No bead ${id}`
+            : `Lookup failed for ${id}`,
+        );
+      });
   };
 
   return (
@@ -72,7 +110,7 @@ export function CommandBar() {
             setText(e.target.value);
             if (hint) setHint(null);
           }}
-          placeholder='Try "show open", "go to board", "open <id>"…'
+          placeholder='Try "show open", "go to board", "task-jodb"…'
           aria-label="Command bar"
           className="h-10 flex-1 rounded-[9px] border border-border bg-[var(--surface-2)] px-[12px] text-[14px] text-[var(--text)] outline-none focus:border-[var(--brand)]"
         />

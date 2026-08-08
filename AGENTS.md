@@ -76,6 +76,21 @@ in `~/code/parlay/docs/COMMAND_DESIGN_CONTRACT.md`, scoped to this app's own
 verbs — it has no runtime dependency on Parlay. Add new voice/typed commands
 by editing that file's `MANIFEST`, not by adding fuzzy/substring matching.
 
+A bare bead id typed on its own (`task-jodb`, `brain-av6h`) resolves too: the
+engine opens it from the loaded index when present, else returns a `lookupBead`
+verb that `components/command-bar.tsx` fetches via the normal single-bead route
+(`api.get`) and surfaces through `openExternal` (an out-of-index drawer
+fallback in `app-shell.tsx`/`bead-detail-drawer.tsx`). This works cross-store
+because the real `beads` binary (`BD_BIN`) resolves ANY federated id from any
+project's cwd — the app's projects are themselves federation stores
+(`~/data/<store>`), so `bd show <foreign-id>` routes to the right store via the
+shared Dolt server. A missing id is tagged `not_found` in `lib/bd.ts` so the
+route answers a clean 404 and the input shows "No bead <id>".
+
+`npm test` runs the `lib/command-engine.ts` unit tests via `node --test` (native
+TS, no tsx/vitest); `test/register.mjs` installs a tiny resolve hook so Node can
+follow the app's extensionless imports.
+
 # Durable production launch: `npm run serve`
 
 `npm run serve` (`scripts/serve.mjs`) is the one launch path that survives a
