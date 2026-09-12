@@ -20,9 +20,15 @@ function storageKey(projectId: string | null): string {
  * purpose: a `typeof window === "undefined"` guard gets constant-folded to `true`
  * in the server bundle, which dead-code-eliminates the project-keyed read and
  * leaves the minifier emitting a temp before its declaration (TDZ during SSR).
+ * Capability-checked, not presence-checked: newer Node exposes a
+ * `globalThis.localStorage` stub without the sync Web Storage API, and treating
+ * it as usable throws `store.getItem is not a function` during SSR.
  */
 function getStore(): Storage | undefined {
-  return (globalThis as { localStorage?: Storage }).localStorage;
+  const store = (globalThis as { localStorage?: unknown }).localStorage;
+  return typeof (store as Storage | undefined)?.getItem === "function"
+    ? (store as Storage)
+    : undefined;
 }
 
 function projectIdFromPath(pathname: string | null): string | null {
