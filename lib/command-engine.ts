@@ -139,6 +139,7 @@ const VIEW_ALIASES: Record<string, View> = {
   needsyou: "needsyou",
   achievements: "achievements",
   publish: "publish",
+  submit: "submit",
   settings: "settings",
 };
 

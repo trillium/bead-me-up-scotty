@@ -12,6 +12,7 @@ const VIEWS: View[] = [
   "needsyou",
   "achievements",
   "publish",
+  "submit",
   "settings",
 ];
 const isView = (v: string | null): v is View => v != null && (VIEWS as string[]).includes(v);

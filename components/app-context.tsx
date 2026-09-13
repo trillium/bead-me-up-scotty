@@ -15,6 +15,7 @@ export type View =
   | "needsyou"
   | "achievements"
   | "publish"
+  | "submit"
   | "settings";
 
 interface AppContextValue {

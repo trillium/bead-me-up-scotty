@@ -23,6 +23,7 @@ import { ActivityView } from "@/components/activity-view";
 import { NeedsYouView } from "@/components/needs-you-view";
 import { AchievementsView } from "@/components/achievements-view";
 import { PublishView } from "@/components/publish-view";
+import { SubmitView } from "@/components/submit-view";
 import { SettingsView } from "@/components/settings-view";
 import { BeadDetailDrawer } from "@/components/bead-detail-drawer";
 import { CreateBeadModal } from "@/components/create-bead-modal";
@@ -247,6 +248,7 @@ export function AppShell({ projectId }: { projectId: string }) {
               {view === "needsyou" && <NeedsYouView />}
               {view === "achievements" && <AchievementsView />}
               {view === "publish" && <PublishView />}
+              {view === "submit" && <SubmitView />}
               {view === "settings" && <SettingsView />}
             </>
           )}
