@@ -46,6 +46,7 @@ const NAV: { key: View; label: string; icon: string }[] = [
   { key: "needsyou", label: "Needs You", icon: "user" },
   { key: "achievements", label: "Achievements", icon: "feature" },
   { key: "publish", label: "Publish", icon: "rocket" },
+  { key: "submit", label: "Submit", icon: "plus" },
   { key: "settings", label: "Settings", icon: "settings" },
 ];
 

@@ -19,6 +19,7 @@ const VIEWS: { key: View; label: string; icon: string }[] = [
   { key: "epics", label: "Epics", icon: "target" },
   { key: "graph", label: "Graph", icon: "graph" },
   { key: "publish", label: "Publish", icon: "rocket" },
+  { key: "submit", label: "Submit", icon: "plus" },
   { key: "settings", label: "Settings", icon: "settings" },
 ];
 
