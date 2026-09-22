@@ -13,6 +13,11 @@ import {
   relTime,
   fmtDateTime,
 } from "@/lib/beads-view";
+import {
+  canInboxSubmit,
+  createInboxSubmitGuard,
+  isInboxSubmitKey,
+} from "@/lib/inbox-submit";
 import type { Bead } from "@/lib/schema";
 
 /**
@@ -142,6 +147,19 @@ function NeedsYouCard({ bead }: { bead: Bead }) {
   const [text, setText] = React.useState("");
   const o = beadOrigin(bead, humanAllowlist);
   const busy = respond.isPending || dismiss.isPending;
+  // Single shared submit path for the Respond button AND the Ctrl/Cmd+S
+  // shortcut below. The guard is acquired synchronously so Ctrl+S and Enter
+  // landing in the same tick (before `isPending` flips) still send once;
+  // the mutation's `onSettled` releases it for the next answer.
+  const submitGuard = React.useRef(createInboxSubmitGuard());
+  const submit = () => {
+    if (!canInboxSubmit({ busy, text })) return;
+    if (!submitGuard.current.tryAcquire()) return;
+    respond.mutate(
+      { id: bead.id, text: text.trim() },
+      { onSettled: () => submitGuard.current.release() },
+    );
+  };
 
   return (
     <div className="rounded-[12px] border border-border bg-[var(--surface)] p-4">
@@ -173,12 +191,25 @@ function NeedsYouCard({ bead }: { bead: Bead }) {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          // Ctrl/Cmd+S submits from the keyboard; the Respond button below is
+          // the tab-focusable equivalent on the same shared submit path.
+          if (isInboxSubmitKey(e)) {
+            e.preventDefault();
+            submit();
+          }
+        }}
         rows={2}
         placeholder="Answer the agent's question… (posts a comment; the bead stays open)"
+        aria-label={`Answer ${bead.id}`}
         className="mb-2 w-full resize-y rounded-[9px] border border-border bg-[var(--surface-2)] p-[9px_11px] text-[13px] leading-[1.5] text-[var(--text)] outline-none focus:border-[var(--brand)]"
       />
       <div className="flex items-center justify-end gap-2">
+        <span className="mr-auto text-[11px] text-[var(--text-3)]">
+          Ctrl+S to respond · or Tab to Respond, Enter to send
+        </span>
         <button
+          type="button"
           disabled={busy}
           onClick={() => dismiss.mutate({ id: bead.id })}
           className="h-8 rounded-lg border border-border bg-[var(--surface-2)] px-3 text-[12.5px] font-[550] text-[var(--text-2)] hover:bg-[var(--surface-3)] disabled:opacity-50"
@@ -186,8 +217,11 @@ function NeedsYouCard({ bead }: { bead: Bead }) {
           Dismiss
         </button>
         <button
+          type="button"
           disabled={busy || !text.trim()}
-          onClick={() => respond.mutate({ id: bead.id, text: text.trim() })}
+          onClick={submit}
+          title="Respond (Ctrl+S)"
+          aria-label={`Respond to ${bead.id}`}
           className="flex h-8 items-center gap-[6px] rounded-lg px-3 text-[12.5px] font-[550] text-white disabled:opacity-50"
           style={{ background: "var(--brand)" }}
         >
