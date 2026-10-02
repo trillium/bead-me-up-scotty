@@ -3,8 +3,8 @@ import { beadOrigin } from "./attribution";
 
 /**
  * Shared bead filter model used by both the Board and List views. Every facet is
- * multi-select; an empty array means "no constraint" (show all). `search` matches
- * id / title / assignee.
+ * multi-select; an empty array means "no constraint" (show all). Search matches
+ * readable planning fields, including report notes, comments, and source URLs.
  */
 export interface Filters {
   status: string[];
@@ -55,16 +55,23 @@ export function matchesFilters(b: Bead, f: Filters, humanAllowlist: string[]): b
   // OR within the facet, like every other facet above; AND across facets.
   if (f.labels.length && !f.labels.some((l) => (b.labels ?? []).includes(l))) return false;
   const q = f.search.trim().toLowerCase();
-  if (
-    q &&
-    !(
-      b.title.toLowerCase().includes(q) ||
-      b.id.toLowerCase().includes(q) ||
-      (b.assignee ?? "").toLowerCase().includes(q) ||
-      (b.labels ?? []).some((l) => l.toLowerCase().includes(q))
-    )
-  )
-    return false;
+  if (q) {
+    // Reports often put source URLs and rationale in notes or comments rather
+    // than their short titles. Search only the already-loaded project data;
+    // this never invokes a federated lookup.
+    const searchable = [
+      b.title,
+      b.id,
+      b.assignee ?? "",
+      ...(b.labels ?? []),
+      b.description ?? "",
+      b.notes ?? "",
+      b.design ?? "",
+      b.acceptance_criteria ?? "",
+      ...(b.comments ?? []).map((comment) => comment.text),
+    ];
+    if (!searchable.some((value) => value.toLowerCase().includes(q))) return false;
+  }
   return true;
 }
 

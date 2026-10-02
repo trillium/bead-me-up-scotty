@@ -51,7 +51,7 @@ export function FilterBar({
           data-search
           value={filters.search}
           onChange={(e) => set({ search: e.target.value })}
-          placeholder="Search beads…  (/)"
+          placeholder="Search reports, notes & links…  (/)"
           className="w-full border-none bg-transparent text-[13px] text-[var(--text)] outline-none"
         />
       </div>

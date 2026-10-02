@@ -49,8 +49,9 @@ for AI agents.
 
 - **Board** — a five-column view (Backlog · Ready · In Progress · Blocked · Done)
   with dense cards showing id, type, priority, assignee, dep/comment counts, and an
-  origin badge. Filter by type / priority / origin, full-text search, and a
-  show/hide-archived toggle. Keyboard: `n` new, `/` search, `Esc` close.
+  origin badge. Filter by type / priority / origin, full-text search across report
+  text, notes, comments, and source URLs, and a show/hide-archived toggle. Keyboard:
+  `n` new, `/` search, `Esc` close.
 - **Backlog ↔ Ready drag-and-drop** — drag cards between columns to change status
   (Backlog = `deferred`, Done = `bd close`); updates are optimistic.
 - **Create / edit** — add tasks and epics (type, priority, description, assignee,
@@ -125,6 +126,31 @@ npm run dev            # http://localhost:3000
 
 Set the human actor / allowlist, repo path, and theme in **Settings** (stored
 under your OS config dir, not in beads).
+
+### View a federated Brain store
+
+Scotty deliberately opens **one configured beads store at a time**; it does not
+list or aggregate federation stores. To view a Brain store, start a dedicated
+Scotty process with that store's directory and its named wrapper. On this machine:
+
+```bash
+BEADS_REPO="$HOME/data/brain" \
+BD_BIN="$(command -v brain)" \
+npm run serve
+```
+
+The `brain` wrapper pins the Brain database, so do not substitute a bare
+federation `bd` command. Open the URL printed by `npm run serve`, then search for
+`brain-g1gc7` (**Beads-native shared day planning**) or `brain-p2bqh`
+(**composable shared day-planning tools**). Both are closed reports: enable
+**Archived** only if needed by your local labels. Search covers their descriptions,
+notes, comments, and source-link URLs; click a result to open the readable detail
+drawer, where Markdown links open safely in a new tab.
+
+This launch is scoped to the configured Brain wrapper and its one store. It
+does not create a cross-store selector or use raw SQL; the wrapper and store path
+are configured before the server starts. Start a separate Scotty process for a
+different store.
 
 ### Docker
 
