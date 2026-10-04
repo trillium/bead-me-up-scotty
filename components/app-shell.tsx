@@ -16,6 +16,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Sidebar } from "@/components/sidebar";
 import { Board } from "@/components/board/board";
 import { ListView } from "@/components/list-view";
+import { GlanceView } from "@/components/glance-view";
 import { EpicsView } from "@/components/epics-view";
 import { GraphView } from "@/components/graph-view";
 import { InsightsView } from "@/components/insights-view";
@@ -241,6 +242,7 @@ export function AppShell({ projectId }: { projectId: string }) {
             <>
               {view === "board" && <Board />}
               {view === "list" && <ListView />}
+              {view === "glance" && <GlanceView />}
               {view === "epics" && <EpicsView focusEpic={focusEpic} />}
               {view === "graph" && <GraphView />}
               {view === "insights" && <InsightsView />}
