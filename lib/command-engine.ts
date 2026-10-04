@@ -130,6 +130,7 @@ export const NO_MATCH_HINT =
 const VIEW_ALIASES: Record<string, View> = {
   board: "board",
   list: "list",
+  glance: "glance",
   epics: "epics",
   epic: "epics",
   graph: "graph",

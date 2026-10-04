@@ -39,6 +39,7 @@ function openIssue(kind: "bug" | "feature") {
 const NAV: { key: View; label: string; icon: string }[] = [
   { key: "board", label: "Board", icon: "board" },
   { key: "list", label: "List", icon: "list" },
+  { key: "glance", label: "Glance", icon: "clock" },
   { key: "epics", label: "Epics", icon: "target" },
   { key: "graph", label: "Graph", icon: "graph" },
   { key: "insights", label: "Insights", icon: "milestone" },

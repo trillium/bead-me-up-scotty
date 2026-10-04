@@ -8,6 +8,7 @@ import type { Filters } from "@/lib/filters";
 export type View =
   | "board"
   | "list"
+  | "glance"
   | "epics"
   | "graph"
   | "insights"
