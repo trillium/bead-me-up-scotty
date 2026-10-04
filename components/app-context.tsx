@@ -9,6 +9,7 @@ export type View =
   | "board"
   | "list"
   | "glance"
+  | "calls"
   | "epics"
   | "graph"
   | "insights"
