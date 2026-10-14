@@ -1,8 +1,18 @@
 import "server-only";
+import path from "node:path";
 import type { Bead, CreateInput, UpdateInput, DepType } from "./schema";
 import { getProject, touchProject, DEMO_PROJECT, ConfigError } from "./config";
 import { createBdStore, isBdAvailable } from "./bd";
 import { demoStore } from "./demo-store";
+import {
+  isFederationParentPath,
+  listFederationStores,
+  normPath,
+  storeIdForBead,
+  targetForStore,
+  type BdTarget,
+  type FederationStore,
+} from "./federation";
 
 /**
  * Storage abstraction. Two implementations:
@@ -43,27 +53,69 @@ export interface BeadsStore {
 // One store per project id. Demo always maps to the shared in-memory store.
 const stores = new Map<string, BeadsStore>();
 
+function foreignTarget(id: string, feds: FederationStore[], currentId: string): BdTarget | null {
+  const owner = storeIdForBead(id, feds.map((s) => s.id));
+  if (!owner || owner === currentId) return null;
+  const store = feds.find((s) => s.id === owner);
+  return store ? targetForStore(store) : null;
+}
+
 export async function getStore(projectId: string): Promise<BeadsStore> {
   if (projectId === DEMO_PROJECT.id) return demoStore;
 
   const cached = stores.get(projectId);
   if (cached) return cached;
 
+  const feds = await listFederationStores();
   const project = getProject(projectId);
-  if (!project || project.path === null) {
-    throw new ConfigError(`Unknown project: ${projectId}`, "unknown_project");
-  }
-  if (!(await isBdAvailable(project.path))) {
+  const byId = feds.find((s) => s.id === projectId);
+  const byPath =
+    !byId && project?.path
+      ? feds.find((s) => normPath(s.root) === normPath(project.path as string))
+      : undefined;
+  const chosen = byId ?? byPath;
+
+  if (!chosen) {
+    if (!project || project.path === null) {
+      throw new ConfigError(`Unknown project: ${projectId}`, "unknown_project");
+    }
+    if (isFederationParentPath(project.path, feds)) {
+      throw new ConfigError(
+        `"${project.name}" is the folder that holds the federated stores, not a store. Open one by its registry name, such as brain.`,
+        "federation_parent",
+      );
+    }
+    if (!(await isBdAvailable(project.path))) {
+      throw new ConfigError(
+        `bd is not available for "${project.name}" (${project.path}). ` +
+          `Check that bd is installed and the folder still contains a .beads directory.`,
+        "bd_unavailable",
+      );
+    }
+  } else if (!(await isBdAvailable(chosen.root))) {
     throw new ConfigError(
-      `bd is not available for "${project.name}" (${project.path}). ` +
-        `Check that bd is installed and the folder still contains a .beads directory.`,
+      `bd is not available for "${chosen.name}" (${chosen.root}). ` +
+        `Check that bd is installed and the store still contains a .beads directory.`,
       "bd_unavailable",
     );
   }
-  const store = createBdStore(project.path);
+
+  const own: BdTarget = chosen
+    ? targetForStore(chosen)
+    : {
+        cwd: project!.path as string,
+        beadsDir: path.join(project!.path as string, ".beads"),
+        sharedServer: false,
+      };
+  const currentId = chosen?.id ?? projectId;
+  const store = createBdStore(own.cwd, own, (id) => foreignTarget(id, feds, currentId));
   stores.set(projectId, store);
-  // First resolution this session — record that the project was opened.
-  touchProject(projectId);
+  // Saved folder projects record last-opened. Registry stores are not copied
+  // into the config file just because someone opened them.
+  if (!chosen && project && project.path !== null) touchProject(projectId);
+  else if (chosen && project && normPath(project.path ?? "") === normPath(chosen.root)) {
+    touchProject(projectId);
+  }
   return store;
 }
 

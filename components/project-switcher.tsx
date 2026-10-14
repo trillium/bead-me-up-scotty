@@ -63,7 +63,7 @@ export function ProjectSwitcher({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent className="w-[210px]">
-          <DropdownMenuLabel>Switch project</DropdownMenuLabel>
+          <DropdownMenuLabel>Switch store</DropdownMenuLabel>
 
           {demo && (
             <DropdownMenuItem onClick={() => router.push("/p/demo")}>
@@ -89,7 +89,7 @@ export function ProjectSwitcher({
             <Plus size={14} />
             <span>Add project…</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/")}>
+          <DropdownMenuItem onClick={() => router.push("/?picker=1")}>
             <LayoutGrid size={14} />
             <span>All projects</span>
           </DropdownMenuItem>
