@@ -38,6 +38,21 @@ test('"open {id}" still works and also falls back to a cross-store lookup', () =
   assert.deepEqual(resolveCommandInput("jump to task-jodb", ctx), { verb: "openBead", id: "task-jodb" });
 });
 
+test("human queue and label filter are exact commands", () => {
+  assert.deepEqual(resolveCommandInput("show human", empty), { verb: "switchView", view: "needsyou" });
+  assert.deepEqual(resolveCommandInput("human queue", empty), { verb: "switchView", view: "needsyou" });
+  assert.deepEqual(resolveCommandInput("go to human queue", empty), {
+    verb: "switchView",
+    view: "needsyou",
+  });
+  assert.deepEqual(resolveCommandInput("filter human", empty), { verb: "setLabelFilter", label: "human" });
+  assert.deepEqual(resolveCommandInput("filter label review", empty), {
+    verb: "setLabelFilter",
+    label: "review",
+  });
+  assert.equal(resolveCommandInput("filter label archived", empty), null);
+});
+
 test("existing non-bead commands are unaffected", () => {
   assert.deepEqual(resolveCommandInput("show open", empty), { verb: "setStatusFilter", status: "open" });
   assert.deepEqual(resolveCommandInput("go to board", empty), { verb: "switchView", view: "board" });

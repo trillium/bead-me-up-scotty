@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { bdChildEnv, type BdTarget } from "./federation";
+import { diffLabels } from "./label-diff";
 import {
   beadSchema,
   unwrapEnvelope,
@@ -27,6 +28,41 @@ export class BdError extends Error {
 }
 
 /**
+ * Turn a failed `bd` child process into a coded error. `overflow` and
+ * `timeout` are failed reads: the store is not empty, and the UI must say so
+ * instead of rendering "0 beads".
+ */
+export function bdErrorFromExec(err: unknown): BdError {
+  const e = err as { stderr?: string; message?: string; killed?: boolean; code?: string };
+  if (e.killed || e.code === "ETIMEDOUT") {
+    return new BdError(e.stderr || e.message || "bd command timed out", "timeout");
+  }
+  if (
+    e.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" ||
+    /maxBuffer/i.test(e.message || "")
+  ) {
+    return new BdError(
+      "The bead list is too large to read. This is not an empty store.",
+      "overflow",
+    );
+  }
+  const stderr = (e.stderr || "").trim();
+  try {
+    const parsed = JSON.parse(stderr) as { error?: string; code?: string };
+    if (parsed.error) return new BdError(parsed.error, parsed.code);
+  } catch {
+    /* stderr was not a JSON envelope */
+  }
+  if (/pending schema migration|BD_ALLOW_REMOTE_MIGRATE|#4259/i.test(stderr)) {
+    return new BdError(stderr, "schema_migration_required");
+  }
+  if (/no issues? found matching/i.test(stderr)) {
+    return new BdError(stderr, "not_found");
+  }
+  return new BdError(stderr || e.message || "bd command failed");
+}
+
+/**
  * Run a bd command. Args are passed as an array (no shell) so titles and
  * descriptions are injection-safe. Always requests the JSON envelope.
  * `BEADS_DIR` / `BD_NAME` come from the target so a process-level default
@@ -46,24 +82,7 @@ async function runBdRaw(
     });
     return stdout;
   } catch (err: unknown) {
-    const e = err as { stderr?: string; message?: string; killed?: boolean; code?: string };
-    if (e.killed || e.code === "ETIMEDOUT") {
-      throw new BdError(e.stderr || e.message || "bd command timed out", "timeout");
-    }
-    const stderr = (e.stderr || "").trim();
-    try {
-      const parsed = JSON.parse(stderr) as { error?: string; code?: string };
-      if (parsed.error) throw new BdError(parsed.error, parsed.code);
-    } catch (parseErr) {
-      if (parseErr instanceof BdError) throw parseErr;
-    }
-    if (/pending schema migration|BD_ALLOW_REMOTE_MIGRATE|#4259/i.test(stderr)) {
-      throw new BdError(stderr, "schema_migration_required");
-    }
-    if (/no issues? found matching/i.test(stderr)) {
-      throw new BdError(stderr, "not_found");
-    }
-    throw new BdError(stderr || e.message || "bd command failed");
+    throw bdErrorFromExec(err);
   }
 }
 
@@ -240,12 +259,13 @@ export function createBdStore(
         if (patch.assignee !== undefined) args.push("--assignee", patch.assignee);
         if (patch.parent !== undefined) args.push("--parent", patch.parent);
         if (patch.labels !== undefined) {
-          if (patch.labels.length) {
-            args.push("--set-labels", patch.labels.join(","));
-          } else {
-            const current = (await show(id)).labels ?? [];
-            if (current.length) args.push("--remove-label", current.join(","));
-          }
+          // Additive tag/label add (`bd tag`, `bd label add`), not --set-labels.
+          // --set-labels is repeatable and does not split a comma-joined value,
+          // so "human,review" would land as one label.
+          const current = (await show(id)).labels ?? [];
+          const { add, remove } = diffLabels(current, patch.labels);
+          for (const label of add) args.push("--add-label", label);
+          for (const label of remove) args.push("--remove-label", label);
         }
         if (args.length > 2) await runBdRaw(args, target, actor);
         return show(id);

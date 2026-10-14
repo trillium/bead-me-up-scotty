@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   bdChildEnv,
+  classifyProjectPath,
   isFederationParentPath,
   matchBeadsRepo,
   parseStoresList,
@@ -48,6 +49,56 @@ test("storeIdForBead uses the longest registry prefix", () => {
   assert.equal(storeIdForBead("nightshift-tasks-abc", ids), "nightshift-tasks");
   assert.equal(storeIdForBead("external_llm_tasks-zz", ids), "external_llm_tasks");
   assert.equal(storeIdForBead("review-3c71.2", ids), null);
+});
+
+const ADD_STORES = [
+  { id: "brain", name: "brain", root: "/Users/me/data/brain", beadsDir: "/Users/me/data/brain/.beads" },
+  { id: "task", name: "task", root: "/Users/me/data/tasks", beadsDir: "/Users/me/data/tasks/.beads" },
+  {
+    id: "education",
+    name: "education",
+    root: "/Users/me/data/education",
+    beadsDir: "/Users/me/data/education/.beads",
+  },
+];
+const addExists = (p: string) =>
+  [
+    "/Users/me/data/.beads",
+    "/Users/me/data/brain/.beads",
+    "/Users/me/data/tasks/.beads",
+    "/Users/me/data/education/.beads",
+    "/tmp/other/.beads",
+  ].includes(p);
+
+test("add project opens a store folder, including when the directory name is not the id", () => {
+  assert.deepEqual(classifyProjectPath("/Users/me/data/tasks", ADD_STORES, addExists), {
+    kind: "store",
+    id: "task",
+    name: "task",
+    root: "/Users/me/data/tasks",
+  });
+  assert.equal(classifyProjectPath("/Users/me/data/tasks/.beads", ADD_STORES, addExists).kind, "store");
+  assert.equal(
+    classifyProjectPath("~/data/brain", ADD_STORES, addExists, "/Users/me").kind,
+    "store",
+  );
+  const education = classifyProjectPath("/Users/me/data/education", ADD_STORES, addExists);
+  assert.equal(education.kind, "store");
+  if (education.kind === "store") assert.equal(education.id, "education");
+});
+
+test("add project does not treat the federation parent as a repo, even when it has .beads", () => {
+  assert.equal(classifyProjectPath("/Users/me/data", ADD_STORES, addExists).kind, "federation_parent");
+  assert.equal(classifyProjectPath("/Users/me/data/.beads", ADD_STORES, addExists).kind, "federation_parent");
+  assert.deepEqual(classifyProjectPath("/tmp/other", ADD_STORES, addExists), {
+    kind: "repo",
+    path: "/tmp/other",
+  });
+  assert.deepEqual(classifyProjectPath("/tmp/other/.beads", ADD_STORES, addExists), {
+    kind: "repo",
+    path: "/tmp/other",
+  });
+  assert.equal(classifyProjectPath("/tmp/missing", ADD_STORES, addExists).kind, "missing");
 });
 
 test("the federation parent folder is not a store", () => {

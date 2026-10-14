@@ -44,11 +44,16 @@ function Browser({ onClose }: { onClose: () => void }) {
 
   const add = useMutation({
     mutationFn: (p: string) => api.projects.add(p),
-    onSuccess: (entry) => {
+    onSuccess: (result) => {
+      if (result.action === "federation_parent") {
+        toast.success(result.message);
+        onClose();
+        return;
+      }
       qc.invalidateQueries({ queryKey: ["projects"] });
-      toast.success(`Added ${entry.name}`);
+      toast.success(result.action === "opened" ? `Opened ${result.name}` : `Added ${result.name}`);
       onClose();
-      router.push(`/p/${entry.id}`);
+      router.push(`/p/${result.id}`);
     },
     onError: (e) => toast.error((e as Error).message),
   });
@@ -64,7 +69,7 @@ function Browser({ onClose }: { onClose: () => void }) {
         <div className="flex-1">
           <DialogTitle className="text-[15px] font-[650]">Add a project</DialogTitle>
           <DialogDescription className="text-[11.5px] text-[var(--text-3)]">
-            Pick a folder that contains a <span className="font-mono">.beads</span> directory
+            Registry stores are already listed. Add a folder only when it is a separate beads repo.
           </DialogDescription>
         </div>
       </div>
@@ -138,16 +143,28 @@ function Browser({ onClose }: { onClose: () => void }) {
             >
               <Folder
                 size={16}
-                className={entry.hasBeads ? "text-[var(--brand)]" : "text-[var(--text-3)]"}
+                className={
+                  entry.role === "store" || entry.role === "repo" || entry.hasBeads
+                    ? "text-[var(--brand)]"
+                    : "text-[var(--text-3)]"
+                }
               />
               <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--text)]">
                 {entry.name}
               </span>
-              {entry.hasBeads && (
+              {entry.role === "store" ? (
+                <span className="rounded-full bg-[var(--brand-weak)] px-2 py-0.5 font-mono text-[10.5px] font-[550] text-[var(--brand)]">
+                  {entry.storeName}
+                </span>
+              ) : entry.role === "parent" ? (
+                <span className="rounded-full bg-[var(--brand-weak)] px-2 py-0.5 font-mono text-[10.5px] font-[550] text-[var(--brand)]">
+                  stores
+                </span>
+              ) : entry.hasBeads ? (
                 <span className="rounded-full bg-[var(--brand-weak)] px-2 py-0.5 font-mono text-[10.5px] font-[550] text-[var(--brand)]">
                   beads
                 </span>
-              )}
+              ) : null}
             </button>
           ))
         )}
@@ -156,13 +173,22 @@ function Browser({ onClose }: { onClose: () => void }) {
       {/* Footer */}
       <div className="flex items-center gap-[10px] border-t border-border p-[14px_18px]">
         <div className="flex-1 text-[11.5px] text-[var(--text-3)]">
-          {data?.hasBeads ? (
+          {data?.role === "parent" ? (
+            <span className="text-[var(--text-2)]">
+              This folder holds the federated stores. They are already in the list.
+            </span>
+          ) : data?.role === "store" ? (
+            <span className="flex items-center gap-1.5 text-[var(--text-2)]">
+              <Check size={13} className="text-[#22c55e]" />
+              {data.storeName} is already listed
+            </span>
+          ) : data?.hasBeads || data?.role === "repo" ? (
             <span className="flex items-center gap-1.5 text-[var(--text-2)]">
               <Check size={13} className="text-[#22c55e]" />
               This folder has a <span className="font-mono">.beads</span> repo
             </span>
           ) : (
-            "Navigate into a folder that contains a .beads directory"
+            "Open a store, or a folder that contains a .beads directory"
           )}
         </div>
         <button
@@ -171,15 +197,26 @@ function Browser({ onClose }: { onClose: () => void }) {
         >
           Cancel
         </button>
-        <button
-          onClick={() => data?.path && add.mutate(data.path)}
-          disabled={!data?.hasBeads || add.isPending}
-          className="flex h-[36px] items-center gap-[7px] rounded-[9px] px-4 text-[13px] font-semibold text-white disabled:opacity-50"
-          style={{ background: "var(--brand)" }}
-        >
-          {add.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={15} />}
-          Add this folder
-        </button>
+        {data?.role === "parent" ? (
+          <button
+            onClick={onClose}
+            className="flex h-[36px] items-center gap-[7px] rounded-[9px] px-4 text-[13px] font-semibold text-white"
+            style={{ background: "var(--brand)" }}
+          >
+            <Check size={15} />
+            Back to the list
+          </button>
+        ) : (
+          <button
+            onClick={() => data?.path && add.mutate(data.path)}
+            disabled={(data?.role !== "store" && data?.role !== "repo" && !data?.hasBeads) || add.isPending}
+            className="flex h-[36px] items-center gap-[7px] rounded-[9px] px-4 text-[13px] font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--brand)" }}
+          >
+            {add.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={15} />}
+            {data?.role === "store" ? `Open ${data.storeName}` : "Add this folder"}
+          </button>
+        )}
       </div>
     </>
   );

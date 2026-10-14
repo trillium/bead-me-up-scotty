@@ -45,6 +45,9 @@ export function CommandBar() {
       case "setPriorityFilter":
         setFilters({ ...filters, priority: [result.priority] });
         break;
+      case "setLabelFilter":
+        setFilters({ ...filters, labels: [result.label] });
+        break;
       case "clearFilters":
         setFilters({ ...emptyFilters, search: filters.search });
         break;
@@ -110,7 +113,7 @@ export function CommandBar() {
             setText(e.target.value);
             if (hint) setHint(null);
           }}
-          placeholder='Try "show open", "go to board", "task-jodb"…'
+          placeholder='Try "show open", "show human", "filter label human", "task-jodb"…'
           aria-label="Command bar"
           className="h-10 flex-1 rounded-[9px] border border-border bg-[var(--surface-2)] px-[12px] text-[14px] text-[var(--text)] outline-none focus:border-[var(--brand)]"
         />

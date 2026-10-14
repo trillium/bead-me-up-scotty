@@ -7,6 +7,21 @@ import { BLOCKING_DEP_TYPES } from "./schema";
  */
 
 /**
+ * Board/List headline. While the first load is in flight, `visible` is 0
+ * because there are no rows yet — that must not read as an empty store.
+ * `detail` is the view's trailing phrase ("drag to set run-order", "live from bd list").
+ */
+export function beadCountLabel(
+  visible: number,
+  loaded: number,
+  loading: boolean,
+  detail: string,
+): string {
+  if (loading && loaded === 0) return "Loading beads…";
+  return `${visible} beads · ${detail}`;
+}
+
+/**
  * A bead needs a human decision when it carries the `human` label (set by
  * `bd human`) and is still actionable (not closed or deferred). Drives the
  * "Needs You" inbox and its sidebar count badge.

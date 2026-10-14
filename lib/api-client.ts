@@ -76,7 +76,13 @@ export interface ProjectInfo {
   addedAt?: string;
   lastOpened?: string;
   hasBeads: boolean;
+  /** `registry` stores come from `brain stores list` and are not removable. */
+  source?: "registry" | "saved" | "demo";
 }
+
+export type AddProjectResult =
+  | (ProjectInfo & { action: "added" | "opened" })
+  | { action: "federation_parent"; message: string };
 export interface ProjectsResponse {
   projects: ProjectInfo[];
 }
@@ -95,16 +101,23 @@ export interface DoctorResponse {
   };
 }
 
+export type FolderRole = "store" | "parent" | "repo" | "plain";
 export interface FsEntry {
   name: string;
   path: string;
   hasBeads: boolean;
+  role: FolderRole;
+  storeId?: string;
+  storeName?: string;
 }
 export interface FsResponse {
   path: string;
   parent: string | null;
   home: string;
   hasBeads: boolean;
+  role: FolderRole;
+  storeId?: string;
+  storeName?: string;
   entries: FsEntry[];
 }
 // Self-update wire types live in a shared, non-server-only module so the client
@@ -305,7 +318,7 @@ export const api = {
   projects: {
     list: () => request<ProjectsResponse>("/api/projects"),
     add: (path: string) =>
-      request<ProjectInfo>("/api/projects", { method: "POST", body: JSON.stringify({ path }) }),
+      request<AddProjectResult>("/api/projects", { method: "POST", body: JSON.stringify({ path }) }),
     remove: (id: string) =>
       request<{ removed: string }>(`/api/projects/${enc(id)}`, { method: "DELETE" }),
     rename: (id: string, name: string) =>

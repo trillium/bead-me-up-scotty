@@ -104,7 +104,18 @@ npm run dev            # http://localhost:3000
   store and the sidebar switches among every registry name (`brain`, `task`,
   `inbox`, …). `/?picker=1` is the full picker. Each `bd` call is pinned to
   that store (`BEADS_DIR` + `BD_NAME`) on the shared Dolt server, so a
-  process-wide default cannot leak another store into the board.
+  process-wide default cannot leak another store into the board. Create and
+  show run in that store. The Needs You view is the `human` review queue
+  (`bd human list`); the label filter always includes `human`, and adding a
+  label uses `bd tag` / `--add-label` rather than replacing the whole set.
+- **Add project and the federation:** you do not add each store by hand.
+  `brain stores list` already fills the launcher. **Add project** is for a
+  beads repo that is not in that registry. Picking a registry store folder —
+  including one whose directory name is not the store id, such as
+  `~/data/tasks` for `task`, or the folder's `.beads` directory — opens that
+  store and does not create a second entry. Picking `~/data` itself (the
+  folder that holds the stores, even when that folder also contains `.beads`)
+  does not add a project; every store inside it is already listed.
 - **Durable production launch:** `npm run build && npm run serve` runs the
   supervised launcher ([`scripts/serve.mjs`](scripts/serve.mjs)), which also
   restarts the server when the in-app "Update now" button requests it. It

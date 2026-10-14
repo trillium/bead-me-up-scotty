@@ -9,6 +9,7 @@ import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useTheme } from "@/components/theme-provider";
 import { makeIndex } from "@/lib/beads-view";
 import { AppProvider } from "@/components/app-context";
+import { ApiError } from "@/lib/api-client";
 import { emptyFilters, type Filters } from "@/lib/filters";
 import { Icon } from "@/components/icons";
 import { CommandBar } from "@/components/command-bar";
@@ -175,7 +176,10 @@ export function AppShell({ projectId }: { projectId: string }) {
     return () => window.removeEventListener("keydown", handler);
   }, [openCreate, toggleTheme]);
 
-  const errorMessage = error ? (error as Error).message : undefined;
+  const errorMessage = error instanceof Error ? error.message : undefined;
+  // overflow/timeout means the list query failed. The project itself opened.
+  const listQueryFailed =
+    error instanceof ApiError && (error.code === "overflow" || error.code === "timeout");
 
   return (
     <AppProvider
@@ -230,7 +234,9 @@ export function AppShell({ projectId }: { projectId: string }) {
           {errorMessage && view !== "settings" ? (
             <div className="flex flex-1 items-center justify-center p-8">
               <div className="max-w-md rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-center">
-                <p className="text-sm font-medium text-destructive">Couldn’t open this project</p>
+                <p className="text-sm font-medium text-destructive">
+                  {listQueryFailed ? "Couldn’t load beads" : "Couldn’t open this project"}
+                </p>
                 <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
                 <Link
                   href="/?picker=1"

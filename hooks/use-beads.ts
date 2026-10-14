@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { toastError } from "@/components/error-toast";
-import { api, type BeadsResponse } from "@/lib/api-client";
+import { api, ApiError, type BeadsResponse } from "@/lib/api-client";
 import type { Bead, CreateInput, UpdateInput, DepType } from "@/lib/schema";
 import { useApp } from "@/components/app-context";
 
@@ -14,10 +14,18 @@ import { useApp } from "@/components/app-context";
 export const beadsKey = (projectId: string) => ["beads", projectId] as const;
 export const activityKey = (projectId: string) => ["activity", projectId] as const;
 
+/** An oversized or timed-out export will fail the same way on every retry. */
+function retryBeadRead(failureCount: number, err: unknown): boolean {
+  const code = err instanceof ApiError ? err.code : undefined;
+  if (code === "timeout" || code === "overflow") return false;
+  return failureCount < 3;
+}
+
 export function useBeads(projectId: string) {
   return useQuery({
     queryKey: beadsKey(projectId),
     queryFn: () => api.list(projectId),
+    retry: retryBeadRead,
     refetchInterval: (q) => q.state.data?.meta.pollIntervalMs ?? 5000,
   });
 }
@@ -28,6 +36,7 @@ export function useActivity(projectId: string) {
   return useQuery({
     queryKey: activityKey(projectId),
     queryFn: () => api.activity(projectId),
+    retry: retryBeadRead,
     refetchInterval: 20000,
   });
 }

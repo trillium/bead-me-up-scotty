@@ -169,10 +169,11 @@ export const updateInputSchema = z.object({
   issue_type: z.enum(BEAD_TYPES).optional(),
   assignee: z.string().optional(),
   /**
-   * Full desired label set (replace-all). Deliberately has NO `.default([])` —
-   * a default would make every unrelated patch (a priority or status change)
-   * look like "set labels to empty" and silently wipe the bead's labels.
-   * Absent means "leave labels alone"; `[]` means "clear them".
+   * Full desired label set. Deliberately has NO `.default([])` — a default
+   * would make every unrelated patch look like "set labels to empty" and
+   * wipe the bead's labels. Absent means "leave labels alone"; `[]` means
+   * "clear them". The server applies the difference with `--add-label` /
+   * `--remove-label` (`bd tag` / `bd label add`), not `--set-labels`.
    */
   labels: z.array(z.string()).optional(),
   /**
