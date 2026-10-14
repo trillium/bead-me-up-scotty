@@ -84,7 +84,7 @@ fallback in `app-shell.tsx`/`bead-detail-drawer.tsx`). This works cross-store
 because the real `beads` binary (`BD_BIN`) resolves ANY federated id from any
 project's cwd — the app's projects are themselves federation stores
 (`~/data/<store>`), so `bd show <foreign-id>` routes to the right store via the
-shared Dolt server. A missing id is tagged `not_found` in `lib/bd.ts` so the
+shared Dolt server. A missing id is tagged `not_found` in `lib/bd-cli.ts` so the
 route answers a clean 404 and the input shows "No bead <id>".
 
 `npm test` runs the `lib/command-engine.ts` unit tests via `node --test` (native
@@ -96,8 +96,8 @@ follow the app's extensionless imports.
 `npm run serve` (`scripts/serve.mjs`) is the one launch path that survives a
 restart, crash recovery, or the app's self-update relaunch (exit code 75) —
 see the "Durable production launch" bullet in `README.md`. It auto-loads
-`scripts/federation.env`, a committed defaults file for `BD_BIN`, `BEADS_DIR`,
-`BD_JSON_ENVELOPE`, and `HOST=0.0.0.0`, without overriding anything already
+`scripts/federation.env`, a committed defaults file for `BD_BIN`, `BEADS_DIR`
+(the brain store), `BD_NAME`, `BD_JSON_ENVELOPE`, and `HOST=127.0.0.1`, without overriding anything already
 set in the real environment. Do not hand-launch with a bare `npx next start`
 for anything long-lived — it bypasses both this env durability and the
 self-update auto-restart.

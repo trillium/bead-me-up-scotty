@@ -13,6 +13,7 @@
  *
  * Zero deps — Node stdlib only.
  */
+import { serveBindRefusal } from "./bind-guard.mjs";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import fs from "node:fs";
@@ -64,6 +65,11 @@ function nextBin() {
 
 const port = process.env.PORT || "3000";
 const host = process.env.HOST || "localhost";
+const bindRefusal = serveBindRefusal(host, process.env.SCOTTY_BASIC_AUTH);
+if (bindRefusal) {
+  console.error(bindRefusal);
+  process.exit(1);
+}
 // Test hook: override the spawned command with a JSON array (BMUS_SERVE_CMD).
 const override = process.env.BMUS_SERVE_CMD ? JSON.parse(process.env.BMUS_SERVE_CMD) : null;
 

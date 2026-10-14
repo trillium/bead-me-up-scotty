@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { listProjects, addProject, DEMO_PROJECT } from "@/lib/config";
 import type { ProjectEntry, DemoProject } from "@/lib/config";
+import { isFederationParentPath, listFederationStores, normPath } from "@/lib/federation";
 import { ok, fail } from "@/lib/api";
 import { z } from "zod";
 
@@ -20,7 +21,25 @@ function annotate(p: ProjectEntry | DemoProject) {
 }
 
 export async function GET() {
-  const projects = [DEMO_PROJECT, ...listProjects()].map(annotate);
+  const stores = await listFederationStores();
+  const storeRoots = new Set(stores.map((s) => normPath(s.root)));
+  const saved = listProjects().filter(
+    (p) => !storeRoots.has(normPath(p.path)) && !isFederationParentPath(p.path, stores),
+  );
+  const federated: ProjectEntry[] = [...stores]
+    .sort((a, b) => {
+      if (a.id === "brain") return -1;
+      if (b.id === "brain") return 1;
+      return a.name.localeCompare(b.name);
+    })
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      path: s.root,
+      addedAt: "",
+      lastOpened: "",
+    }));
+  const projects = [DEMO_PROJECT, ...federated, ...saved].map(annotate);
   return ok({ projects });
 }
 

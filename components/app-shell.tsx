@@ -233,7 +233,7 @@ export function AppShell({ projectId }: { projectId: string }) {
                 <p className="text-sm font-medium text-destructive">Couldn’t open this project</p>
                 <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
                 <Link
-                  href="/"
+                  href="/?picker=1"
                   className="mt-4 inline-block rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
                 >
                   ← Back to projects
