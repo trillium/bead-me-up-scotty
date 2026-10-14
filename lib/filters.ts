@@ -36,8 +36,11 @@ export const ARCHIVED_LABEL = "archived";
  * Callers pass ALL beads (not the filtered set) so selecting one label doesn't
  * make the other options vanish from the dropdown.
  */
+/** The review-queue label (`bd human` / `bd tag <id> human`). Always offered as a filter. */
+export const HUMAN_LABEL = "human";
+
 export function labelOptionsFrom(beads: Bead[]): { value: string; label: string }[] {
-  const s = new Set<string>();
+  const s = new Set<string>([HUMAN_LABEL]);
   for (const b of beads) for (const l of b.labels ?? []) if (l !== ARCHIVED_LABEL) s.add(l);
   return [...s].sort().map((l) => ({ value: l, label: l }));
 }

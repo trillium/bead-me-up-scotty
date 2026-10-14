@@ -32,6 +32,11 @@ export function fail(err: unknown) {
     }
     // parse_error means bd's output drifted from our schema — a server-side
     // integration failure, not a bad client request.
+    // A timed-out or oversized export failed; retrying it verbatim just fills
+    // the buffer again. 503 tells the client to show the error, not "0 beads".
+    if (err.code === "timeout" || err.code === "overflow") {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: 503 });
+    }
     const status =
       err.code === "not_found" ? 404 : err.code === "parse_error" ? 500 : 400;
     return NextResponse.json({ error: err.message, code: err.code }, { status });

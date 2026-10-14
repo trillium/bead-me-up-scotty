@@ -1,4 +1,5 @@
-import { removeProject, renameProject } from "@/lib/config";
+import { ConfigError, removeProject, renameProject } from "@/lib/config";
+import { findFederationStore } from "@/lib/federation";
 import { resetStore } from "@/lib/store";
 import { ok, fail } from "@/lib/api";
 import { z } from "zod";
@@ -10,6 +11,12 @@ type Ctx = { params: Promise<{ id: string }> };
 export async function DELETE(_req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
+    if (await findFederationStore(id)) {
+      throw new ConfigError(
+        `"${id}" is a registry store. It stays listed while brain stores list includes it.`,
+        "registry_store",
+      );
+    }
     removeProject(id);
     resetStore(id);
     return ok({ removed: id });

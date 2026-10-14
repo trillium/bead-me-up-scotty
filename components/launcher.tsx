@@ -31,7 +31,7 @@ export function Launcher() {
         <div className="flex-1 leading-[1.15]">
           <div className="text-[16px] font-[680] tracking-[-.01em]">Bead Me Up, Scotty</div>
           <div className="text-[12px] text-[var(--text-3)]">
-            Choose a beads project to view and manage
+            Registry stores are already listed. Add project is for any other beads repo.
           </div>
         </div>
         <button
@@ -153,21 +153,23 @@ function ProjectCard({ project }: { project: ProjectInfo }) {
               className="h-[6px] w-[6px] rounded-full"
               style={{ background: project.hasBeads ? "#22c55e" : "#ef4444" }}
             />
-            {project.hasBeads ? "bd repo" : "no .beads found"}
+            {project.source === "registry" ? "store" : project.hasBeads ? "bd repo" : "no .beads found"}
           </div>
         </div>
-        <button
-          title="Remove from list"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (confirm(`Remove "${project.name}" from the list? This does not delete any files.`)) {
-              remove.mutate();
-            }
-          }}
-          className="flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-lg text-[var(--text-3)] opacity-0 transition-opacity hover:bg-[var(--surface-3)] hover:text-[#ef4444] group-hover:opacity-100"
-        >
-          <Trash2 size={14} />
-        </button>
+        {project.source !== "registry" && (
+          <button
+            title="Remove from list"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (confirm(`Remove "${project.name}" from the list? This does not delete any files.`)) {
+                remove.mutate();
+              }
+            }}
+            className="flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-lg text-[var(--text-3)] opacity-0 transition-opacity hover:bg-[var(--surface-3)] hover:text-[#ef4444] group-hover:opacity-100"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
       <div className="truncate font-mono text-[11px] text-[var(--text-3)]" dir="rtl" title={project.path ?? ""}>
         {project.path}

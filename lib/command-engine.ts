@@ -13,6 +13,7 @@ export type Verb =
   | "setStatusFilter"
   | "setTypeFilter"
   | "setPriorityFilter"
+  | "setLabelFilter"
   | "clearFilters"
   | "switchView"
   | "openBead"
@@ -33,6 +34,7 @@ export type CommandResult =
   | { verb: "setStatusFilter"; status: BeadStatus }
   | { verb: "setTypeFilter"; type: BeadType }
   | { verb: "setPriorityFilter"; priority: number }
+  | { verb: "setLabelFilter"; label: string }
   | { verb: "clearFilters" }
   | { verb: "switchView"; view: View }
   | { verb: "openBead"; id: string }
@@ -52,6 +54,24 @@ export interface CommandContext {
  * the earlier capture doesn't validate against its own vocabulary.
  */
 export const MANIFEST: Command[] = [
+  {
+    // Needs You is the `human` review queue (`bd human list`). Exact phrases
+    // so "show human" is the queue, not a failed status filter.
+    id: "human-queue",
+    phrases: ["show human", "human queue", "show human queue", "human review"],
+    mode: "whole",
+    priority: 8,
+    verb: "switchView",
+    args: { view: "needsyou" },
+  },
+  {
+    id: "filter-human-label",
+    phrases: ["filter human", "show human label"],
+    mode: "whole",
+    priority: 9,
+    verb: "setLabelFilter",
+    args: { label: "human" },
+  },
   {
     id: "clear-filters",
     phrases: ["clear filters", "reset filters", "show everything", "show all"],
@@ -85,6 +105,13 @@ export const MANIFEST: Command[] = [
     mode: "whole",
     priority: 30,
     verb: "setPriorityFilter",
+  },
+  {
+    id: "set-label-filter",
+    phrases: ["filter label {label}", "show label {label}"],
+    mode: "whole",
+    priority: 35,
+    verb: "setLabelFilter",
   },
   {
     id: "switch-view",
@@ -138,6 +165,8 @@ const VIEW_ALIASES: Record<string, View> = {
   activity: "activity",
   "needs you": "needsyou",
   needsyou: "needsyou",
+  "human queue": "needsyou",
+  "human review": "needsyou",
   achievements: "achievements",
   publish: "publish",
   submit: "submit",
@@ -299,6 +328,11 @@ function resolveVerb(
     case "setPriorityFilter": {
       const priority = resolvePriority(args.priority ?? "");
       return priority != null ? { verb, priority } : null;
+    }
+    case "setLabelFilter": {
+      const label = (args.label ?? "").trim();
+      if (!label || /\s/.test(label) || label.toLowerCase() === "archived") return null;
+      return { verb, label };
     }
     case "clearFilters":
       return { verb };

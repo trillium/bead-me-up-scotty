@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { ok, fail } from "@/lib/api";
+import { classifyProjectPath, listFederationStores, type ProjectPathClass } from "@/lib/federation";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,24 @@ function hasBeads(p: string): boolean {
   } catch {
     return false;
   }
+}
+
+function folderRole(
+  inputPath: string,
+  stores: Parameters<typeof classifyProjectPath>[1],
+): { role: "store" | "parent" | "repo" | "plain"; storeId?: string; storeName?: string } {
+  let decision: ProjectPathClass;
+  try {
+    decision = classifyProjectPath(inputPath, stores);
+  } catch {
+    return { role: "plain" };
+  }
+  if (decision.kind === "store") {
+    return { role: "store", storeId: decision.id, storeName: decision.name };
+  }
+  if (decision.kind === "federation_parent") return { role: "parent" };
+  if (decision.kind === "repo") return { role: "repo" };
+  return { role: "plain" };
 }
 
 export async function GET(req: Request) {
@@ -68,6 +87,8 @@ export async function GET(req: Request) {
       throw e;
     }
 
+    const stores = await listFederationStores();
+    const here = folderRole(target, stores);
     const entries = dirents
       .filter((d) => {
         if (d.name.startsWith(".")) return false; // hide dotfolders
@@ -83,7 +104,7 @@ export async function GET(req: Request) {
       })
       .map((d) => {
         const full = path.join(target, d.name);
-        return { name: d.name, path: full, hasBeads: hasBeads(full) };
+        return { name: d.name, path: full, hasBeads: hasBeads(full), ...folderRole(full, stores) };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -95,6 +116,7 @@ export async function GET(req: Request) {
       parent: parent === target || !parentAllowed ? null : parent,
       home: root || home,
       hasBeads: hasBeads(target),
+      ...here,
       entries,
     });
   } catch (e) {

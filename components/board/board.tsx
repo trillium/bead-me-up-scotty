@@ -14,7 +14,7 @@ import { useApp } from "@/components/app-context";
 import { useSetStatus } from "@/hooks/use-beads";
 import { useOrder, useSetOrder } from "@/hooks/use-order";
 import { useBoardPrefs } from "@/hooks/use-board-prefs";
-import { isBlocked, childrenCountMap, epicProgress } from "@/lib/beads-view";
+import { beadCountLabel, isBlocked, childrenCountMap, epicProgress } from "@/lib/beads-view";
 import { FilterBar } from "@/components/filter-bar";
 import { matchesFilters, labelOptionsFrom } from "@/lib/filters";
 import type { Bead } from "@/lib/schema";
@@ -135,7 +135,13 @@ export function Board() {
         <div className="mr-1 flex flex-col gap-px">
           <h1 className="m-0 text-base font-[650] tracking-[-.01em]">Board</h1>
           <span className="text-[11.5px] text-[var(--text-3)]">
-            {visible.length} beads · live from <span className="font-mono">bd list</span>
+            {loading && beads.length === 0 ? (
+              beadCountLabel(visible.length, beads.length, loading, "live from bd list")
+            ) : (
+              <>
+                {visible.length} beads · live from <span className="font-mono">bd list</span>
+              </>
+            )}
           </span>
         </div>
 

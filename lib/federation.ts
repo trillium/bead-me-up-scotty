@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -93,6 +94,62 @@ export function storeIdForBead(id: string, storeIds: readonly string[]): string 
     }
   }
   return best;
+}
+
+/** Expand a leading `~` so a pasted home path classifies the same as an absolute one. */
+export function expandHome(input: string, home = os.homedir()): string {
+  const trimmed = input.trim();
+  if (trimmed === "~") return home;
+  if (trimmed.startsWith("~/")) return path.join(home, trimmed.slice(2));
+  return trimmed;
+}
+
+function isBeadsDirPath(p: string): boolean {
+  return path.basename(p) === ".beads";
+}
+
+export type ProjectPathClass =
+  | { kind: "store"; id: string; name: string; root: string }
+  | { kind: "federation_parent" }
+  | { kind: "repo"; path: string }
+  | { kind: "missing"; path: string };
+
+/**
+ * What "Add project" should do with a folder.
+ * A registry store (root or its `.beads` dir) opens that store — the directory
+ * name can differ from the registry id (`tasks` is `task`). The federation
+ * parent (`~/data`, which itself contains `.beads`) is not a project. Any
+ * other folder that contains `.beads` is a normal repo. Passing the `.beads`
+ * directory itself classifies as its parent.
+ */
+export function classifyProjectPath(
+  inputPath: string,
+  stores: readonly { id: string; name?: string; root: string; beadsDir: string }[],
+  exists: (p: string) => boolean = fs.existsSync,
+  home = os.homedir(),
+): ProjectPathClass {
+  const abs = path.resolve(expandHome(inputPath, home));
+  const rootCandidate = isBeadsDirPath(abs) ? path.dirname(abs) : abs;
+  const nAbs = normPath(abs);
+  const nRoot = normPath(rootCandidate);
+
+  const store = stores.find((s) => {
+    const root = normPath(s.root);
+    const beads = normPath(s.beadsDir);
+    return nAbs === root || nAbs === beads || nRoot === root;
+  });
+  if (store) {
+    return { kind: "store", id: store.id, name: store.name ?? store.id, root: store.root };
+  }
+
+  if (isFederationParentPath(rootCandidate, stores) || isFederationParentPath(abs, stores)) {
+    return { kind: "federation_parent" };
+  }
+
+  if (exists(path.join(rootCandidate, ".beads"))) {
+    return { kind: "repo", path: rootCandidate };
+  }
+  return { kind: "missing", path: abs };
 }
 
 /** True when `projectPath` is the parent folder that holds the federation (e.g. `~/data`). */

@@ -26,6 +26,7 @@ import { matchesFilters, labelOptionsFrom } from "@/lib/filters";
 import { BOARD_COLUMNS, COLUMN_ORDER, colOf } from "@/lib/board-columns";
 import { beadOrigin, originTitle } from "@/lib/attribution";
 import {
+  beadCountLabel,
   catColor,
   statusLabel,
   typeColor,
@@ -168,7 +169,7 @@ export function ListView() {
         <div className="mr-1 flex flex-col gap-px">
           <h1 className="m-0 text-base font-[650] tracking-[-.01em]">List</h1>
           <span className="text-[11.5px] text-[var(--text-3)]">
-            {rows.length} beads · drag to set run-order
+            {beadCountLabel(rows.length, beads.length, loading, "drag to set run-order")}
           </span>
         </div>
 
